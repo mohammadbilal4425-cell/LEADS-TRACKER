@@ -1,0 +1,2759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deal Desk v5 — Denzen</title>
+<!--
+=====================================================================
+ DEAL DESK v5 — Denzen Computers
+ ---------------------------------------------------------------
+ - Data naye node 'dealDesk4/' mein hai (v3 ka purana data alag,
+   mehfooz rehta hai).
+ - Logins:  BILAL (Admin) 5510 · YOUSUF (Admin) 7000
+            AHMED ALI (salesperson) 5530
+            BILAL ke andar AHMED ALI ka section kholne ka password: 5520
+ - Netlify par yehi file replace karein (Deploys -> upload).
+   GitHub Pages ke liye naam index.html rakh dein.
+ - PDF banane ke liye internet chahiye (jsPDF CDN se aati hai).
+=====================================================================
+-->
+<style>
+:root{
+  --bg:#F4F6FA; --card:#FFFFFF; --card2:#F7F9FD; --line:#E4E9F2; --line2:#EDF0F7;
+  --txt:#141E33; --mut:#5B6980; --dim:#98A3B8;
+  --blu:#2456E6; --blu-bg:#EBF1FF; --blu-tx:#1C43BC;
+  --red:#E5484D; --red-bg:#FDE8E8; --red-tx:#C03538;
+  --gold:#F0A800; --gold-bg:#FCF1CE; --gold-tx:#9A6700;
+  --grn:#12B76A; --grn-bg:#DCF5E8; --grn-tx:#0B7A4B;
+  --gry-bg:#EDF0F6;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --r:14px; --sh:0 1px 2px rgba(20,30,51,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:var(--ui);font-size:15px}
+button{font-family:var(--ui)}
+a{color:var(--blu-tx)}
+:focus-visible{outline:2px solid var(--blu);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- shell ---------- */
+.top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.brand{font-weight:800;letter-spacing:-.4px;font-size:17px}
+.brand span{color:var(--blu)}
+.brand small{display:block;font-weight:600;font-size:10px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase}
+.who{margin-left:auto;text-align:right;font-size:11.5px;color:var(--mut);line-height:1.25}
+.who b{display:block;color:var(--txt);font-size:13px}
+.wrap{max-width:1040px;margin:0 auto;padding:14px 14px 110px}
+.lockbar{position:sticky;top:52px;z-index:39;background:var(--red);color:#fff;font-weight:700;font-size:13px;
+  padding:9px 14px;text-align:center;border-radius:10px;margin-bottom:12px}
+.banner{background:var(--gold-bg);border:1px solid #EBD49A;color:var(--gold-tx);border-radius:10px;
+  padding:9px 12px;font-size:12.5px;margin-bottom:12px}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);
+  color:var(--mut);font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;box-shadow:var(--sh)}
+.tab.on{background:#17233C;color:#fff;border-color:#17233C}
+.tab.alert{color:var(--red-tx);border-color:#F5C6C8}
+.pip{min-width:19px;height:19px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;
+  font-weight:700;display:grid;place-items:center;padding:0 5px;font-family:var(--mono)}
+.pip.g{background:var(--grn)}
+
+/* ---------- stat boxes ---------- */
+.master{display:grid;gap:8px;margin-bottom:14px}
+.master>div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--sh)}
+.master .n{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1}
+.master .l{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);margin-top:5px;font-weight:600}
+.master .red .n{color:var(--red)} .master .amb .n{color:var(--gold-tx)}
+.master .grn .n{color:var(--grn-tx)} .master .blu .n{color:var(--blu-tx)} .master .gry .n{color:var(--mut)}
+.pulse{animation:pu 1.6s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* ---------- alert boxes (COD waghera) ---------- */
+.alert{border-radius:12px;padding:12px 14px;margin-bottom:9px;font-weight:650;border:1px solid;cursor:pointer;font-size:13.5px}
+.alert .tmr{font-family:var(--mono);font-weight:800}
+.alert.red{background:var(--red-bg);border-color:#F5C6C8;color:var(--red-tx)}
+.alert.org{background:var(--gold-bg);border-color:#F0D9A8;color:var(--gold-tx)}
+.alert.grn{background:var(--grn-bg);border-color:#A9DEC0;color:var(--grn-tx)}
+.alert.big{font-size:15px;text-align:center;padding:15px}
+
+/* ---------- section headers + dropdown groups ---------- */
+.sec-h{display:flex;align-items:baseline;gap:9px;margin:18px 0 9px}
+.sec-h h3{margin:0;font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.sec-h .ct{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.drop-h{display:flex;align-items:center;gap:9px;margin:18px 0 9px;cursor:pointer;user-select:none;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;box-shadow:var(--sh)}
+.drop-h h3{margin:0;font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.drop-h .ct{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.drop-h .ch{margin-left:auto;color:var(--dim);font-size:13px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:22px;text-align:center;color:var(--dim);font-size:13.5px;margin-bottom:10px}
+.empty b{display:block;color:var(--mut);margin-bottom:4px;font-size:14.5px}
+
+/* ---------- SIGNATURE: 1-inch deal card + Min/Offer/Farq strip ---------- */
+.cc{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:10px 12px 10px 15px;margin-bottom:9px;box-shadow:var(--sh);cursor:pointer;overflow:hidden}
+.cc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line)}
+.cc.r::before{background:var(--red)} .cc.a::before{background:var(--gold)}
+.cc.g::before{background:var(--grn)} .cc.b::before{background:var(--blu)}
+.cc.x{opacity:.6}
+.cc .row1{display:flex;align-items:center;gap:8px}
+.cc .nm{font-weight:750;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc .sub{font-size:11.5px;color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc .end{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:7px}
+.chip{display:inline-block;padding:3px 9px;border-radius:999px;font-size:10px;font-weight:750;letter-spacing:.5px;text-transform:uppercase}
+.c-red{background:var(--red-bg);color:var(--red-tx)} .c-amb{background:var(--gold-bg);color:var(--gold-tx)}
+.c-grn{background:var(--grn-bg);color:var(--grn-tx)} .c-blu{background:var(--blu-bg);color:var(--blu-tx)}
+.c-gry{background:var(--gry-bg);color:var(--mut)}
+.ub{min-width:20px;height:20px;border-radius:999px;background:var(--grn);color:#fff;font-size:11px;font-weight:800;
+  display:grid;place-items:center;padding:0 6px;font-family:var(--mono);box-shadow:0 1px 3px rgba(18,183,106,.45)}
+.trio{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:6px;margin-top:8px}
+.trio>div{background:var(--card2);border:1px solid var(--line2);border-radius:9px;padding:5px 9px}
+.trio i{display:block;font-style:normal;font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);font-weight:700}
+.trio b{font-family:var(--mono);font-size:13.5px;font-weight:700}
+.trio .ok b{color:var(--grn-tx)} .trio .bad b{color:var(--red-tx)}
+.trio .ok{background:var(--grn-bg);border-color:#A9DEC0} .trio .bad{background:var(--red-bg);border-color:#F5C6C8}
+
+/* ---------- full-screen lead ---------- */
+.fs{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch}
+.fs .fhead{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.fs .fhead .nm{font-weight:800;font-size:17px;letter-spacing:-.2px}
+.fs .fhead .ph{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.xbig{width:34px;height:34px;border-radius:99px;border:1px solid var(--line);background:var(--card2);
+  color:var(--mut);font-size:15px;cursor:pointer;display:grid;place-items:center;flex:0 0 auto}
+.fs .inner{max-width:760px;margin:0 auto;padding:14px 14px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--sh)}
+.kvg{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.kv{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:8px 11px}
+.kv i{display:block;font-style:normal;font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);font-weight:700}
+.kv b{font-size:13.5px;font-weight:700}
+.kv b.mono{font-family:var(--mono)}
+.note{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:13.5px}
+.note .lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:3px;font-weight:700}
+.note.urg{background:#FFF5F5;border-color:#F5C6C8}
+.note.hl{background:#F1FBF5;border-color:#BFE9CF}
+
+/* ---------- chat ---------- */
+.msgs{display:flex;flex-direction:column;gap:7px;margin:10px 0}
+.m{max-width:84%;padding:8px 11px 5px;border-radius:13px;font-size:13.5px;line-height:1.4;background:#fff;border:1px solid var(--line)}
+.m .w{font-size:9.5px;color:var(--dim);font-weight:700;margin-bottom:2px;letter-spacing:.4px;text-transform:uppercase}
+.m .tm{font-size:9.5px;color:var(--dim);text-align:right;margin-top:3px;font-family:var(--mono)}
+.m.me{align-self:flex-end;background:#E5EDFF;border-color:#CBDAFE;border-bottom-right-radius:4px}
+.m.th{align-self:flex-start;border-bottom-left-radius:4px}
+.chatrow{display:flex;gap:8px;margin-top:6px}
+.chatrow .in{flex:1}
+
+/* ---------- buttons / forms ---------- */
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.btn{padding:10px 13px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--txt);
+  font-weight:650;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;box-shadow:var(--sh)}
+.btn:active{transform:translateY(1px)}
+.btn.p{background:var(--blu);border-color:var(--blu);color:#fff}
+.btn.ok{background:var(--grn);border-color:var(--grn);color:#fff}
+.btn.dgr{background:var(--red);border-color:var(--red);color:#fff}
+.btn.gh{background:transparent;color:var(--mut);box-shadow:none}
+.btn.sm{padding:7px 10px;font-size:12.5px}
+.btn.wide{flex:1;justify-content:center}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.f{margin-bottom:12px}
+.f label{display:block;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);margin-bottom:5px;font-weight:700}
+.f label i{color:var(--red);font-style:normal}
+.in,select.in,textarea.in{width:100%;padding:11px 12px;background:#fff;border:1px solid var(--line);
+  border-radius:10px;color:var(--txt);outline:none;font-size:14px;font-family:var(--ui)}
+.in.mono{font-family:var(--mono)}
+.in:focus{border-color:var(--blu);box-shadow:0 0 0 3px rgba(36,86,230,.12)}
+textarea.in{min-height:74px;resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11.5px;color:var(--dim);margin-top:5px}
+.err{color:var(--red-tx);font-size:12.5px;margin-top:6px;font-weight:600}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--mut);font-weight:650;cursor:pointer;font-size:13px}
+.seg button.on{background:#17233C;border-color:#17233C;color:#fff}
+.seg button.on.u{background:var(--red);border-color:var(--red)}
+.seg button.on.n{background:var(--gold);border-color:var(--gold)}
+.fin-red{color:var(--red-tx)!important;font-weight:800}
+
+/* ---------- model search ---------- */
+.mlist{border:1px solid var(--line);border-radius:10px;background:#fff;max-height:230px;overflow:auto;margin-top:6px}
+.mlist button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 12px;border:0;
+  background:#fff;border-bottom:1px solid var(--line2);font-size:13px;cursor:pointer;color:var(--txt)}
+.mlist button:last-child{border-bottom:0}
+.mlist button:hover{background:#F3F7FF}
+.mlist .pr{font-family:var(--mono);color:var(--dim);flex:0 0 auto}
+.mpick{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--blu-bg);
+  border:1px solid #C9D9FE;border-radius:10px;padding:10px 12px;font-weight:700;font-size:13.5px}
+.calcout{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.calcout>div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+.calcout .k{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);font-weight:700}
+.calcout .v{font-family:var(--mono);font-weight:750;font-size:14.5px;margin-top:2px}
+
+/* ---------- table / list rows ---------- */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px;border-bottom:1px solid var(--line2)}
+.tbl td.n{text-align:right;font-family:var(--mono)}
+.sprow{display:flex;align-items:center;gap:10px}
+
+/* ---------- modal sheet ---------- */
+.modal{position:fixed;inset:0;z-index:80;background:rgba(16,24,40,.45);display:flex;align-items:flex-end;justify-content:center;padding:0}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px 26px;max-height:92vh;overflow:auto}
+.sheet h3{margin:0 0 12px;font-size:16px}
+.modal img.zoom{max-width:96vw;max-height:80vh;border-radius:10px}
+
+/* ---------- login ---------- */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.lgc{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 22px;box-shadow:0 12px 40px rgba(20,30,51,.08)}
+.lg{font-weight:800;font-size:26px;letter-spacing:-.6px;text-align:center}
+.lg em{font-style:normal;color:var(--blu)}
+.lsub{text-align:center;color:var(--mut);font-size:12.5px;margin:6px 0 18px}
+.dots{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.dots i{width:13px;height:13px;border-radius:99px;border:2px solid var(--line);display:block}
+.dots i.f{background:var(--blu);border-color:var(--blu)}
+.pins{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.pins button{padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card2);font-size:17px;font-weight:700;cursor:pointer}
+
+/* ---------- bottom bar (sales) ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:45;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:9px;justify-content:center}
+.bar .btn{flex:1;max-width:250px;justify-content:center}
+@media(min-width:760px){ .master{grid-template-columns:repeat(6,1fr)!important} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ==================================================================
+   1. CONFIG
+   ================================================================== */
+const FB_CONFIG = {
+  apiKey:            "AIzaSyAYFIvdk8lfof6r59TKecMSDPnFqQWpr4s",
+  authDomain:        "denzen-sales.firebaseapp.com",
+  databaseURL:       "https://denzen-sales-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "denzen-sales",
+  storageBucket:     "denzen-sales.firebasestorage.app",
+  messagingSenderId: "893728954333",
+  appId:             "1:893728954333:web:3f0d07405669dd9ed78834"
+};
+const ROOT = 'dealDesk5';          // v4 ka apna data — purana dealDesk/ mehfooz
+const MODELS_MIRROR = 'prices';    // Sales Tracker (v17) ke rates
+
+/* ==================================================================
+   2. DATA LAYER
+   ================================================================== */
+let LIVE = false, fdb = null;
+try{
+  if(FB_CONFIG.databaseURL && window.firebase){
+    firebase.initializeApp(FB_CONFIG); fdb = firebase.database(); LIVE = true;
+  }
+}catch(e){ console.warn('Firebase off:', e.message); }
+
+const LOCAL = {}; const subs = [];
+function _get(o,path){ return path.split('/').filter(Boolean).reduce((a,k)=> (a==null?null:a[k]), o); }
+function _set(o,path,v){ const ks=path.split('/').filter(Boolean); let c=o;
+  ks.slice(0,-1).forEach(k=>{ if(typeof c[k]!=='object'||c[k]===null) c[k]={}; c=c[k]; });
+  if(v===null) delete c[ks[ks.length-1]]; else c[ks[ks.length-1]]=v; }
+function fire(){ subs.forEach(s=> s.cb(_get(LOCAL,s.path))); }
+function dbErr(e){ console.error('DB write fail:', e); try{ toast('Save nahi hua — '+((e&&e.message)||e),'bad'); }catch(_){} }
+const DB = {
+  watch(path, cb){
+    if(LIVE) fdb.ref(ROOT+'/'+path).on('value', s=> cb(s.val()));
+    else { subs.push({path,cb}); cb(_get(LOCAL,path)); }
+  },
+  set(path,v){ if(LIVE) return fdb.ref(ROOT+'/'+path).set(v).catch(dbErr); _set(LOCAL,path,v); fire(); return Promise.resolve(); },
+  update(path,o){ if(LIVE) return fdb.ref(ROOT+'/'+path).update(o).catch(dbErr);
+    Object.keys(o).forEach(k=> _set(LOCAL,path+'/'+k,o[k])); fire(); return Promise.resolve(); },
+  push(path,v){ if(LIVE){ const r=fdb.ref(ROOT+'/'+path).push(); r.set(v).catch(dbErr); return r.key; }
+    const id='L'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    _set(LOCAL,path+'/'+id,v); fire(); return id; },
+  get(path){ if(!LIVE) return Promise.resolve(_get(LOCAL,path));
+    return fdb.ref(ROOT+'/'+path).once('value').then(s=>s.val()); },
+  raw(path){ if(!LIVE) return Promise.resolve(null);
+    return fdb.ref(path).once('value').then(s=>s.val()); }
+};
+
+/* ==================================================================
+   3. STATE + HELPERS
+   ================================================================== */
+const S = { me:null, tab:'dash', leads:{}, cods:{}, reqs:{}, staff:{}, models:{}, cfg:{},
+            achat:{}, now:Date.now(), full:null, codFull:null, sp:null, aliOpen:false, open:{}, q:'' };
+const $  = s=> document.querySelector(s);
+const app= document.getElementById('app');
+window.onerror = function(msg,src,line){
+  try{ var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999;background:#E5484D;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;white-space:pre-wrap';
+    d.textContent='App error (screenshot bhej dein): '+msg+' — line '+line;
+    d.onclick=function(){d.remove();}; document.body.appendChild(d);
+  }catch(_){}
+};
+const MIN=60e3, HOUR=3600e3;
+const RAM_D = {4:-4500, 8:0, 16:7000, 32:19000};
+const SSD_D = {128:-3500, 256:0, 512:7500, 1024:20500};
+const PKR = n => (n==null||isNaN(n)) ? '—' : 'Rs '+Number(n).toLocaleString('en-PK');
+const K   = n => (n==null||isNaN(n)) ? '—' : (Math.round(Number(n)/100)/10)+'k';
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const digits = s => String(s||'').replace(/\D/g,'');
+const pad2 = n => String(n).padStart(2,'0');
+const today = ()=>{ const d=new Date(); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); };
+const dayDiff = d => Math.round((new Date(d+'T00:00:00') - new Date(today()+'T00:00:00'))/864e5);
+function ago(ts){ if(!ts) return '';
+  const m=Math.floor((S.now-ts)/MIN);
+  if(m<1) return 'abhi'; if(m<60) return m+' min'; const h=Math.floor(m/60);
+  if(h<24) return h+' ghante'; return Math.floor(h/24)+' din'; }
+function stamp(ts){ if(!ts) return ''; const d=new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function dLabel(d){ if(!d) return '—'; const n=dayDiff(d);
+  if(n===0) return 'AAJ'; if(n===1) return 'KAL'; if(n<0) return Math.abs(n)+' din guzar gaye';
+  return n+' din baad'; }
+function toast(msg,kind){
+  const t=document.createElement('div'); t.textContent=msg;
+  t.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:99;padding:11px 18px;border-radius:10px;font-weight:650;font-size:14px;max-width:88vw;text-align:center;box-shadow:0 8px 24px rgba(23,32,53,.25);'
+    +(kind==='bad'?'background:#E5484D;color:#fff':'background:#12B76A;color:#fff');
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2600);
+}
+function waP(p){ let d=digits(p);
+  if(d.startsWith('0')) d='92'+d.slice(1);
+  else if(d.length===10 && d[0]==='3') d='92'+d;
+  return d; }
+const waL = (p,t)=> 'https://wa.me/'+waP(p)+'?text='+encodeURIComponent(t||'');
+const okPhone = p => { const d=digits(p); return /^03\d{9}$/.test(d)||/^3\d{9}$/.test(d)||/^923\d{9}$/.test(d); };
+function calcRate(k,ram,ssd){
+  const m=S.models[k]; if(!m) return null;
+  const d=(RAM_D[ram]||0)+(SSD_D[ssd]||0);
+  const base=Number(m.base)||0;
+  return { name:m.name, list:base+d, floor:(Number(m.sellMin)||base)+d };
+}
+
+/* ==================================================================
+   4. ROLES + VISIBILITY
+   ================================================================== */
+// roles: boss = BILAL Admin (sab kuch + Team) · admin = YOUSUF Admin · sales
+const isAdm = r => r==='boss'||r==='admin';
+const prot  = id => !!((S.staff[id]||{}).prot);           // private salesperson (AHMED ALI)
+function canSee(by){
+  if(!S.me) return false;
+  if(S.me.role==='sales') return by===S.me.id;
+  if(S.me.role==='admin') return !prot(by);               // YOUSUF: Ahmed ki leads/chat nahi
+  return !prot(by) || S.aliOpen;                          // BILAL: password ke baad
+}
+const side = r => r==='sales' ? 's' : 'a';
+const STAT = {
+  pending :{t:'Jawab ka intezar', c:'c-amb'},
+  approved:{t:'Approved',         c:'c-grn'},
+  rejected:{t:'Reject',           c:'c-red'},
+  booked  :{t:'Date tay',         c:'c-amb'},
+  won     :{t:'Purchase',         c:'c-grn'},
+  lost    :{t:'Lost',             c:'c-gry'}
+};
+function court(l){
+  const adm = isAdm(S.me.role);
+  if(l.status==='won')  return 'g';
+  if(l.status==='lost') return 'x';
+  if(l.status==='pending') return adm ? 'r' : 'a';
+  if(isAns(l)) return adm ? 'g' : 'r';
+  if(l.status==='booked'){ const n=dayDiff(l.visitDate); return n<=1 ? 'r' : 'a'; }
+  return 'b';
+}
+function unread(l){
+  const my=side(S.me.role); const a=l.chat||[]; let c=0;
+  for(let i=a.length-1;i>=0;i--){ if(a[i].sd===my) break; c++; }
+  return c;
+}
+const myLeads = ()=> Object.entries(S.leads).map(([id,l])=>({id,...l}))
+  .filter(l=>canSee(l.by)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+const myCods = ()=> Object.entries(S.cods).map(([id,c])=>({id,...c}))
+  .filter(c=> isAdm(S.me.role) ? true : c.by===S.me.id)   // COD har admin ko (Ahmed ki bhi)
+  .sort((a,b)=>(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
+const myReqs = ()=> Object.entries(S.reqs).map(([id,r])=>({id,...r}))
+  .filter(r=>canSee(r.by)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+/* ==================================================================
+   5. SEED
+   ================================================================== */
+const SEED_STAFF = {
+  bilal :{name:'BILAL',     pin:'5510', role:'boss'},
+  yousuf:{name:'YOUSUF',    pin:'7000', role:'admin'},
+  ahmed :{name:'AHMED ALI', pin:'5530', role:'sales', prot:true}
+};
+const SEED_MODELS = {
+  Dell_Latitude_5400_i5_8th:{name:"Dell Latitude 5400 i5 8th",brand:"Dell",model:"Latitude 5400",proc:"i5",gen:"8th",gpu:"",base:54000,sellMin:52000,autoMin:0},
+  Dell_Latitude_5400_i7_8th:{name:"Dell Latitude 5400 i7 8th",brand:"Dell",model:"Latitude 5400",proc:"i7",gen:"8th",gpu:"",base:59000,sellMin:56000,autoMin:0},
+  Dell_Latitude_5410_i5_10th:{name:"Dell Latitude 5410 i5 10th",brand:"Dell",model:"Latitude 5410",proc:"i5",gen:"10th",gpu:"",base:65000,sellMin:62000,autoMin:0},
+  Dell_Latitude_5410_i7_10th:{name:"Dell Latitude 5410 i7 10th",brand:"Dell",model:"Latitude 5410",proc:"i7",gen:"10th",gpu:"",base:73000,sellMin:70000,autoMin:0},
+  Dell_Latitude_5420_i5_11th:{name:"Dell Latitude 5420 i5 11th",brand:"Dell",model:"Latitude 5420",proc:"i5",gen:"11th",gpu:"",base:75000,sellMin:72000,autoMin:0},
+  Dell_Latitude_5420_i7_11th:{name:"Dell Latitude 5420 i7 11th",brand:"Dell",model:"Latitude 5420",proc:"i7",gen:"11th",gpu:"",base:82000,sellMin:79000,autoMin:0},
+  Dell_Latitude_5430_i5_12th:{name:"Dell Latitude 5430 i5 12th",brand:"Dell",model:"Latitude 5430",proc:"i5",gen:"12th",gpu:"",base:103000,sellMin:95000,autoMin:0},
+  Dell_Latitude_5430_i7_12th:{name:"Dell Latitude 5430 i7 12th",brand:"Dell",model:"Latitude 5430",proc:"i7",gen:"12th",gpu:"",base:115000,sellMin:105000,autoMin:0},
+  Dell_Latitude_5450_i5_5th:{name:"Dell Latitude 5450 i5 5th",brand:"Dell",model:"Latitude 5450",proc:"i5",gen:"5th",gpu:"",base:42000,sellMin:38000,autoMin:0},
+  Dell_Latitude_5470_i5_6th:{name:"Dell Latitude 5470 i5 6th",brand:"Dell",model:"Latitude 5470",proc:"i5",gen:"6th",gpu:"",base:45000,sellMin:42000,autoMin:0},
+  Dell_Latitude_5470_i7_6th:{name:"Dell Latitude 5470 i7 6th",brand:"Dell",model:"Latitude 5470",proc:"i7",gen:"6th",gpu:"",base:48000,sellMin:46000,autoMin:0},
+  Dell_Latitude_5480_i5_7th:{name:"Dell Latitude 5480 i5 7th",brand:"Dell",model:"Latitude 5480",proc:"i5",gen:"7th",gpu:"",base:48000,sellMin:45000,autoMin:0},
+  Dell_Latitude_5480_i7_7th:{name:"Dell Latitude 5480 i7 7th",brand:"Dell",model:"Latitude 5480",proc:"i7",gen:"7th",gpu:"",base:53000,sellMin:49000,autoMin:0},
+  Dell_Latitude_5490_i5_8th:{name:"Dell Latitude 5490 i5 8th",brand:"Dell",model:"Latitude 5490",proc:"i5",gen:"8th",gpu:"",base:53000,sellMin:51000,autoMin:0},
+  Dell_Latitude_5490_i7_8th:{name:"Dell Latitude 5490 i7 8th",brand:"Dell",model:"Latitude 5490",proc:"i7",gen:"8th",gpu:"",base:58000,sellMin:55000,autoMin:0},
+  Dell_Latitude_5500_i5_8th:{name:"Dell Latitude 5500 i5 8th",brand:"Dell",model:"Latitude 5500",proc:"i5",gen:"8th",gpu:"",base:60000,sellMin:58000,autoMin:0},
+  Dell_Latitude_5500_i7_8th:{name:"Dell Latitude 5500 i7 8th",brand:"Dell",model:"Latitude 5500",proc:"i7",gen:"8th",gpu:"",base:65000,sellMin:62000,autoMin:0},
+  Dell_Latitude_5510_i5_10th:{name:"Dell Latitude 5510 i5 10th",brand:"Dell",model:"Latitude 5510",proc:"i5",gen:"10th",gpu:"",base:75000,sellMin:72000,autoMin:0},
+  Dell_Latitude_5510_i7_10th:{name:"Dell Latitude 5510 i7 10th",brand:"Dell",model:"Latitude 5510",proc:"i7",gen:"10th",gpu:"",base:85000,sellMin:82000,autoMin:0},
+  Dell_Latitude_5520_i5_11th:{name:"Dell Latitude 5520 i5 11th",brand:"Dell",model:"Latitude 5520",proc:"i5",gen:"11th",gpu:"",base:90000,sellMin:85000,autoMin:0},
+  Dell_Latitude_5520_i7_11th:{name:"Dell Latitude 5520 i7 11th",brand:"Dell",model:"Latitude 5520",proc:"i7",gen:"11th",gpu:"",base:102000,sellMin:93000,autoMin:0},
+  Dell_Latitude_5570_i5_6th:{name:"Dell Latitude 5570 i5 6th",brand:"Dell",model:"Latitude 5570",proc:"i5",gen:"6th",gpu:"",base:49000,sellMin:47000,autoMin:0},
+  Dell_Latitude_5570_i7_6th:{name:"Dell Latitude 5570 i7 6th",brand:"Dell",model:"Latitude 5570",proc:"i7",gen:"6th",gpu:"",base:52000,sellMin:49000,autoMin:0},
+  Dell_Latitude_5580_i5_7th:{name:"Dell Latitude 5580 i5 7th",brand:"Dell",model:"Latitude 5580",proc:"i5",gen:"7th",gpu:"",base:57000,sellMin:53000,autoMin:0},
+  Dell_Latitude_5580_i7_7th:{name:"Dell Latitude 5580 i7 7th",brand:"Dell",model:"Latitude 5580",proc:"i7",gen:"7th",gpu:"",base:60000,sellMin:56000,autoMin:0},
+  Dell_Latitude_5590_i5_8th:{name:"Dell Latitude 5590 i5 8th",brand:"Dell",model:"Latitude 5590",proc:"i5",gen:"8th",gpu:"",base:58000,sellMin:55000,autoMin:0},
+  Dell_Latitude_5590_i7_8th:{name:"Dell Latitude 5590 i7 8th",brand:"Dell",model:"Latitude 5590",proc:"i7",gen:"8th",gpu:"",base:65000,sellMin:61000,autoMin:0},
+  Dell_Latitude_7270_i5_6th:{name:"Dell Latitude 7270 i5 6th",brand:"Dell",model:"Latitude 7270",proc:"i5",gen:"6th",gpu:"",base:42000,sellMin:39000,autoMin:0},
+  Dell_Latitude_7270_i7_6th:{name:"Dell Latitude 7270 i7 6th",brand:"Dell",model:"Latitude 7270",proc:"i7",gen:"6th",gpu:"",base:44000,sellMin:41000,autoMin:0},
+  Dell_Latitude_7280_i5_7th:{name:"Dell Latitude 7280 i5 7th",brand:"Dell",model:"Latitude 7280",proc:"i5",gen:"7th",gpu:"",base:46000,sellMin:43000,autoMin:0},
+  Dell_Latitude_7280_i7_7th:{name:"Dell Latitude 7280 i7 7th",brand:"Dell",model:"Latitude 7280",proc:"i7",gen:"7th",gpu:"",base:48000,sellMin:46000,autoMin:0},
+  Dell_Latitude_7290_i5_8th:{name:"Dell Latitude 7290 i5 8th",brand:"Dell",model:"Latitude 7290",proc:"i5",gen:"8th",gpu:"",base:50000,sellMin:48000,autoMin:0},
+  Dell_Latitude_7290_i7_8th:{name:"Dell Latitude 7290 i7 8th",brand:"Dell",model:"Latitude 7290",proc:"i7",gen:"8th",gpu:"",base:53000,sellMin:51000,autoMin:0},
+  Dell_Latitude_7400_i5_8th:{name:"Dell Latitude 7400 i5 8th",brand:"Dell",model:"Latitude 7400",proc:"i5",gen:"8th",gpu:"",base:56000,sellMin:54000,autoMin:0},
+  Dell_Latitude_7400_i7_8th:{name:"Dell Latitude 7400 i7 8th",brand:"Dell",model:"Latitude 7400",proc:"i7",gen:"8th",gpu:"",base:60000,sellMin:57000,autoMin:0},
+  Dell_Latitude_7410_i5_10th:{name:"Dell Latitude 7410 i5 10th",brand:"Dell",model:"Latitude 7410",proc:"i5",gen:"10th",gpu:"",base:62000,sellMin:60000,autoMin:0},
+  Dell_Latitude_7410_i7_10th:{name:"Dell Latitude 7410 i7 10th",brand:"Dell",model:"Latitude 7410",proc:"i7",gen:"10th",gpu:"",base:72000,sellMin:68000,autoMin:0},
+  Dell_Latitude_7420_i5_11th:{name:"Dell Latitude 7420 i5 11th",brand:"Dell",model:"Latitude 7420",proc:"i5",gen:"11th",gpu:"",base:73000,sellMin:69000,autoMin:0},
+  Dell_Latitude_7420_i7_11th:{name:"Dell Latitude 7420 i7 11th",brand:"Dell",model:"Latitude 7420",proc:"i7",gen:"11th",gpu:"",base:78000,sellMin:75000,autoMin:0},
+  Dell_Latitude_7430_i5_12th:{name:"Dell Latitude 7430 i5 12th",brand:"Dell",model:"Latitude 7430",proc:"i5",gen:"12th",gpu:"",base:95000,sellMin:90000,autoMin:0},
+  Dell_Latitude_7430_i7_12th:{name:"Dell Latitude 7430 i7 12th",brand:"Dell",model:"Latitude 7430",proc:"i7",gen:"12th",gpu:"",base:110000,sellMin:105000,autoMin:0},
+  Dell_Latitude_7470_i5_6th:{name:"Dell Latitude 7470 i5 6th",brand:"Dell",model:"Latitude 7470",proc:"i5",gen:"6th",gpu:"",base:47000,sellMin:43000,autoMin:0},
+  Dell_Latitude_7470_i7_6th:{name:"Dell Latitude 7470 i7 6th",brand:"Dell",model:"Latitude 7470",proc:"i7",gen:"6th",gpu:"",base:49000,sellMin:46000,autoMin:0},
+  Dell_Latitude_7480_i5_7th:{name:"Dell Latitude 7480 i5 7th",brand:"Dell",model:"Latitude 7480",proc:"i5",gen:"7th",gpu:"",base:53000,sellMin:49000,autoMin:0},
+  Dell_Latitude_7480_i7_7th:{name:"Dell Latitude 7480 i7 7th",brand:"Dell",model:"Latitude 7480",proc:"i7",gen:"7th",gpu:"",base:57000,sellMin:52000,autoMin:0},
+  Dell_Latitude_7490_i5_8th:{name:"Dell Latitude 7490 i5 8th",brand:"Dell",model:"Latitude 7490",proc:"i5",gen:"8th",gpu:"",base:58000,sellMin:53000,autoMin:0},
+  Dell_Latitude_7490_i7_8th:{name:"Dell Latitude 7490 i7 8th",brand:"Dell",model:"Latitude 7490",proc:"i7",gen:"8th",gpu:"",base:61000,sellMin:57000,autoMin:0},
+  Dell_Precision_5510_i7_6th:{name:"Dell Precision 5510 i7 6th (2GB)",brand:"Dell",model:"Precision 5510",proc:"i7",gen:"6th",gpu:"2gb",base:85000,sellMin:79000,autoMin:0},
+  Dell_Precision_5520_i7_7th:{name:"Dell Precision 5520 i7 7th (2GB)",brand:"Dell",model:"Precision 5520",proc:"i7",gen:"7th",gpu:"2gb",base:89000,sellMin:84000,autoMin:0},
+  Dell_Precision_5530_i7_8th:{name:"Dell Precision 5530 i7 8th (4GB)",brand:"Dell",model:"Precision 5530",proc:"i7",gen:"8th",gpu:"4gb",base:120000,sellMin:115000,autoMin:0},
+  Dell_Precision_5540_i7_9th:{name:"Dell Precision 5540 i7 9th (4GB)",brand:"Dell",model:"Precision 5540",proc:"i7",gen:"9th",gpu:"4GB",base:140000,sellMin:135000,autoMin:0},
+  Dell_Precision_5550_i7_10th:{name:"Dell Precision 5550 i7 10th (4GB)",brand:"Dell",model:"Precision 5550",proc:"i7",gen:"10th",gpu:"4gb",base:165000,sellMin:155000,autoMin:0},
+  Dell_Precision_5560_i7_11th:{name:"Dell Precision 5560 i7 11th (4GB)",brand:"Dell",model:"Precision 5560",proc:"i7",gen:"11th",gpu:"4gb",base:190000,sellMin:175000,autoMin:0},
+  Dell_Precision_7510_i7_6th:{name:"Dell Precision 7510 i7 6th (2GB)",brand:"Dell",model:"Precision 7510",proc:"i7",gen:"6th",gpu:"2gb",base:79000,sellMin:73000,autoMin:0},
+  Dell_Precision_7520_i7_7th:{name:"Dell Precision 7520 i7 7th (4GB)",brand:"Dell",model:"Precision 7520",proc:"i7",gen:"7th",gpu:"4gb",base:88000,sellMin:83000,autoMin:0},
+  Dell_Precision_7530_i7_8th:{name:"Dell Precision 7530 i7 8th (4GB)",brand:"Dell",model:"Precision 7530",proc:"i7",gen:"8th",gpu:"4GB",base:110000,sellMin:105000,autoMin:0},
+  Dell_Precision_7540_i7_9th:{name:"Dell Precision 7540 i7 9th (4GB)",brand:"Dell",model:"Precision 7540",proc:"i7",gen:"9th",gpu:"4gb",base:150000,sellMin:143000,autoMin:0},
+  HP_640_G1_i5_4th:{name:"HP 640 G1 i5 4th",brand:"HP",model:"640 G1",proc:"i5",gen:"4th",gpu:"",base:37000,sellMin:35000,autoMin:0},
+  HP_640_G1_i7_4th:{name:"HP 640 G1 i7 4th",brand:"HP",model:"640 G1",proc:"i7",gen:"4th",gpu:"",base:39000,sellMin:37000,autoMin:0},
+  HP_640_G2_i5_5th:{name:"HP 640 G2 i5 5th",brand:"HP",model:"640 G2",proc:"i5",gen:"5th",gpu:"",base:43000,sellMin:40000,autoMin:0},
+  HP_640_G2_i7_5th:{name:"HP 640 G2 i7 5th",brand:"HP",model:"640 G2",proc:"i7",gen:"5th",gpu:"",base:46000,sellMin:43000,autoMin:0},
+  HP_640_G3_i5_6th:{name:"HP 640 G3 i5 6th",brand:"HP",model:"640 G3",proc:"i5",gen:"6th",gpu:"",base:46000,sellMin:44000,autoMin:0},
+  HP_640_G3_i7_6th:{name:"HP 640 G3 i7 6th",brand:"HP",model:"640 G3",proc:"i7",gen:"6th",gpu:"",base:49000,sellMin:47000,autoMin:0},
+  HP_640_G4_i5_7th:{name:"HP 640 G4 i5 7th",brand:"HP",model:"640 G4",proc:"i5",gen:"7th",gpu:"",base:49000,sellMin:46000,autoMin:0},
+  HP_640_G4_i7_7th:{name:"HP 640 G4 i7 7th",brand:"HP",model:"640 G4",proc:"i7",gen:"7th",gpu:"",base:53000,sellMin:50000,autoMin:0},
+  HP_640_G5_i5_8th:{name:"HP 640 G5 i5 8th",brand:"HP",model:"640 G5",proc:"i5",gen:"8th",gpu:"",base:65000,sellMin:63000,autoMin:0},
+  HP_640_G5_i7_8th:{name:"HP 640 G5 i7 8th",brand:"HP",model:"640 G5",proc:"i7",gen:"8th",gpu:"",base:69000,sellMin:67000,autoMin:0},
+  HP_640_G7_i5_10th:{name:"HP 640 G7 i5 10th",brand:"HP",model:"640 G7",proc:"i5",gen:"10th",gpu:"",base:70000,sellMin:67000,autoMin:0},
+  HP_640_G7_i7_10th:{name:"HP 640 G7 i7 10th",brand:"HP",model:"640 G7",proc:"i7",gen:"10th",gpu:"",base:80000,sellMin:77000,autoMin:0},
+  HP_640_G8_i5_11th:{name:"HP 640 G8 i5 11th",brand:"HP",model:"640 G8",proc:"i5",gen:"11th",gpu:"",base:98000,sellMin:94000,autoMin:0},
+  HP_640_G8_i7_11th:{name:"HP 640 G8 i7 11th",brand:"HP",model:"640 G8",proc:"i7",gen:"11th",gpu:"",base:115000,sellMin:108000,autoMin:0},
+  HP_650_G4_i5_7th:{name:"HP 650 G4 i5 7th",brand:"HP",model:"650 G4",proc:"i5",gen:"7th",gpu:"",base:60000,sellMin:58000,autoMin:0},
+  HP_650_G5_i5_8th:{name:"HP 650 G5 i5 8th",brand:"HP",model:"650 G5",proc:"i5",gen:"8th",gpu:"",base:73000,sellMin:70000,autoMin:0},
+  HP_650_G7_i5_10th:{name:"HP 650 G7 i5 10th",brand:"HP",model:"650 G7",proc:"i5",gen:"10th",gpu:"",base:92000,sellMin:87000,autoMin:0},
+  HP_650_G8_i5_11th:{name:"HP 650 G8 i5 11th",brand:"HP",model:"650 G8",proc:"i5",gen:"11th",gpu:"",base:115000,sellMin:110000,autoMin:0},
+  HP_840_G3_i5_6th:{name:"HP 840 G3 i5 6th",brand:"HP",model:"840 G3",proc:"i5",gen:"6th",gpu:"",base:46000,sellMin:44000,autoMin:0},
+  HP_840_G3_i7_6th:{name:"HP 840 G3 i7 6th",brand:"HP",model:"840 G3",proc:"i7",gen:"6th",gpu:"",base:49000,sellMin:47000,autoMin:0},
+  HP_840_G4_i5_7th:{name:"HP 840 G4 i5 7th",brand:"HP",model:"840 G4",proc:"i5",gen:"7th",gpu:"",base:50000,sellMin:48000,autoMin:0},
+  HP_840_G4_i7_7th:{name:"HP 840 G4 i7 7th",brand:"HP",model:"840 G4",proc:"i7",gen:"7th",gpu:"",base:55000,sellMin:52000,autoMin:0},
+  HP_840_G5_i5_8th:{name:"HP 840 G5 i5 8th",brand:"HP",model:"840 G5",proc:"i5",gen:"8th",gpu:"",base:67000,sellMin:65000,autoMin:0},
+  HP_840_G5_i7_8th:{name:"HP 840 G5 i7 8th",brand:"HP",model:"840 G5",proc:"i7",gen:"8th",gpu:"",base:73000,sellMin:70000,autoMin:0},
+  HP_840_G6_i5_8th:{name:"HP 840 G6 i5 8th",brand:"HP",model:"840 G6",proc:"i5",gen:"8th",gpu:"",base:68000,sellMin:66000,autoMin:0},
+  HP_840_G6_i7_8th:{name:"HP 840 G6 i7 8th",brand:"HP",model:"840 G6",proc:"i7",gen:"8th",gpu:"",base:73000,sellMin:70000,autoMin:0},
+  HP_840_G7_i5_10th:{name:"HP 840 G7 i5 10th",brand:"HP",model:"840 G7",proc:"i5",gen:"10th",gpu:"",base:88000,sellMin:82000,autoMin:0},
+  HP_840_G7_i7_10th:{name:"HP 840 G7 i7 10th",brand:"HP",model:"840 G7",proc:"i7",gen:"10th",gpu:"",base:93000,sellMin:90000,autoMin:0},
+  HP_840_G8_i5_11th:{name:"HP 840 G8 i5 11th",brand:"HP",model:"840 G8",proc:"i5",gen:"11th",gpu:"",base:103000,sellMin:97000,autoMin:0},
+  HP_840_G8_i7_11th:{name:"HP 840 G8 i7 11th",brand:"HP",model:"840 G8",proc:"i7",gen:"11th",gpu:"",base:113000,sellMin:108000,autoMin:0},
+  HP_840_G9_i5_12th:{name:"HP 840 G9 i5 12th",brand:"HP",model:"840 G9",proc:"i5",gen:"12th",gpu:"",base:145000,sellMin:135000,autoMin:0},
+  HP_840_G9_i7_12th:{name:"HP 840 G9 i7 12th",brand:"HP",model:"840 G9",proc:"i7",gen:"12th",gpu:"",base:150000,sellMin:145000,autoMin:0},
+  HP_850_G5_i5_8th:{name:"HP 850 G5 i5 8th",brand:"HP",model:"850 G5",proc:"i5",gen:"8th",gpu:"",base:75000,sellMin:73000,autoMin:0},
+  HP_850_G6_i5_8th:{name:"HP 850 G6 i5 8th",brand:"HP",model:"850 G6",proc:"i5",gen:"8th",gpu:"",base:84000,sellMin:82000,autoMin:0},
+  HP_850_G7_i5_10th:{name:"HP 850 G7 i5 10th",brand:"HP",model:"850 G7",proc:"i5",gen:"10th",gpu:"",base:108000,sellMin:103000,autoMin:0},
+  HP_850_G8_i5_11th:{name:"HP 850 G8 i5 11th",brand:"HP",model:"850 G8",proc:"i5",gen:"11th",gpu:"",base:140000,sellMin:135000,autoMin:0},
+  HP_Elitebook_x360_1030_1040_i5_10th:{name:"HP Elitebook x360 1030/1040 i5 10th",brand:"HP",model:"Elitebook x360 1030/1040",proc:"i5",gen:"10th",gpu:"",base:100000,sellMin:93000,autoMin:0},
+  HP_Elitebook_x360_1030_1040_i7_10th:{name:"HP Elitebook x360 1030/1040 i7 10th",brand:"HP",model:"Elitebook x360 1030/1040",proc:"i7",gen:"10th",gpu:"",base:108000,sellMin:105000,autoMin:0},
+  HP_ZBOOK_i7_6th:{name:"HP ZBOOK i7 6th (2GB)",brand:"HP",model:"ZBOOK",proc:"i7",gen:"6th",gpu:"2GB",base:77000,sellMin:74000,autoMin:0},
+  HP_ZBOOK_i7_8th:{name:"HP ZBOOK i7 8th (4GB)",brand:"HP",model:"ZBOOK",proc:"i7",gen:"8th",gpu:"4GB",base:115000,sellMin:110000,autoMin:0},
+  Lenovo_L14_Gen_1_i5_10th:{name:"Lenovo L14 Gen 1 i5 10th",brand:"Lenovo",model:"L14 Gen 1",proc:"i5",gen:"10th",gpu:"",base:66000,sellMin:63000,autoMin:0},
+  Lenovo_L14_Gen_1_i7_10th:{name:"Lenovo L14 Gen 1 i7 10th",brand:"Lenovo",model:"L14 Gen 1",proc:"i7",gen:"10th",gpu:"",base:75000,sellMin:73000,autoMin:0},
+  Lenovo_L450_i5_5th:{name:"Lenovo L450 i5 5th",brand:"Lenovo",model:"L450",proc:"i5",gen:"5th",gpu:"",base:40000,sellMin:38000,autoMin:0},
+  Lenovo_L460_i5_6th:{name:"Lenovo L460 i5 6th",brand:"Lenovo",model:"L460",proc:"i5",gen:"6th",gpu:"",base:46000,sellMin:43000,autoMin:0},
+  Lenovo_L470_i5_7th:{name:"Lenovo L470 i5 7th",brand:"Lenovo",model:"L470",proc:"i5",gen:"7th",gpu:"",base:50000,sellMin:48000,autoMin:0},
+  Lenovo_L480_i5_8th:{name:"Lenovo L480 i5 8th",brand:"Lenovo",model:"L480",proc:"i5",gen:"8th",gpu:"",base:54000,sellMin:52000,autoMin:0},
+  Lenovo_L490_i5_8th:{name:"Lenovo L490 i5 8th",brand:"Lenovo",model:"L490",proc:"i5",gen:"8th",gpu:"",base:58000,sellMin:55000,autoMin:0},
+  Lenovo_P50_i7_6th:{name:"Lenovo P50 i7 6th (2GB)",brand:"Lenovo",model:"P50",proc:"i7",gen:"6th",gpu:"2GB",base:75000,sellMin:73000,autoMin:0},
+  Lenovo_P51_i7_7th:{name:"Lenovo P51 i7 7th (4GB)",brand:"Lenovo",model:"P51",proc:"i7",gen:"7th",gpu:"4GB",base:95000,sellMin:89000,autoMin:0},
+  Lenovo_P52_i7_8th:{name:"Lenovo P52 i7 8th (4GB)",brand:"Lenovo",model:"P52",proc:"i7",gen:"8th",gpu:"4GB",base:118000,sellMin:110000,autoMin:0},
+  Lenovo_P53_i7_10th:{name:"Lenovo P53 i7 10th (4GB)",brand:"Lenovo",model:"P53",proc:"i7",gen:"10th",gpu:"4GB",base:145000,sellMin:140000,autoMin:0},
+  Lenovo_T14_Gen_1_i5_10th:{name:"Lenovo T14 Gen 1 i5 10th",brand:"Lenovo",model:"T14 Gen 1",proc:"i5",gen:"10th",gpu:"",base:68000,sellMin:65000,autoMin:0},
+  Lenovo_T14_Gen_2_i5_11th:{name:"Lenovo T14 Gen 2 i5 11th",brand:"Lenovo",model:"T14 Gen 2",proc:"i5",gen:"11th",gpu:"",base:79000,sellMin:77000,autoMin:0},
+  Lenovo_T450_i5_5th:{name:"Lenovo T450 i5 5th",brand:"Lenovo",model:"T450",proc:"i5",gen:"5th",gpu:"",base:40000,sellMin:38000,autoMin:0},
+  Lenovo_T460_i5_6th:{name:"Lenovo T460 i5 6th",brand:"Lenovo",model:"T460",proc:"i5",gen:"6th",gpu:"",base:46000,sellMin:44000,autoMin:0},
+  Lenovo_T470_i5_7th:{name:"Lenovo T470 i5 7th",brand:"Lenovo",model:"T470",proc:"i5",gen:"7th",gpu:"",base:50000,sellMin:48000,autoMin:0},
+  Lenovo_T480_i5_8th:{name:"Lenovo T480 i5 8th",brand:"Lenovo",model:"T480",proc:"i5",gen:"8th",gpu:"",base:55000,sellMin:53000,autoMin:0},
+  Lenovo_T490_i5_8th:{name:"Lenovo T490 i5 8th",brand:"Lenovo",model:"T490",proc:"i5",gen:"8th",gpu:"",base:57000,sellMin:55000,autoMin:0},
+  Lenovo_X1_CARBON_i5_6th:{name:"Lenovo X1 CARBON i5 6th",brand:"Lenovo",model:"X1 CARBON",proc:"i5",gen:"6th",gpu:"",base:49000,sellMin:47000,autoMin:0},
+  Lenovo_X1_CARBON_i7_6th:{name:"Lenovo X1 CARBON i7 6th",brand:"Lenovo",model:"X1 CARBON",proc:"i7",gen:"6th",gpu:"",base:53000,sellMin:50000,autoMin:0},
+  Lenovo_X1_CARBON_i7_8th:{name:"Lenovo X1 CARBON i7 8th",brand:"Lenovo",model:"X1 CARBON",proc:"i7",gen:"8th",gpu:"",base:72000,sellMin:69000,autoMin:0},
+  Lenovo_X1_Yoga_i5_6th:{name:"Lenovo X1 Yoga i5 6th",brand:"Lenovo",model:"X1 Yoga",proc:"i5",gen:"6th",gpu:"",base:56000,sellMin:53000,autoMin:0},
+  Lenovo_X1_Yoga_i7_8th:{name:"Lenovo X1 Yoga i7 8th",brand:"Lenovo",model:"X1 Yoga",proc:"i7",gen:"8th",gpu:"",base:89000,sellMin:85000,autoMin:0},
+  Lenovo_x13_Yoga_i5_10th:{name:"Lenovo x13 Yoga i5 10th",brand:"Lenovo",model:"x13 Yoga",proc:"i5",gen:"10th",gpu:"",base:78000,sellMin:75000,autoMin:0},
+  Lenovo_X260_i5_6th:{name:"Lenovo X260 i5 6th",brand:"Lenovo",model:"X260",proc:"i5",gen:"6th",gpu:"",base:42000,sellMin:40000,autoMin:0},
+  Lenovo_X270_i5_7th:{name:"Lenovo X270 i5 7th",brand:"Lenovo",model:"X270",proc:"i5",gen:"7th",gpu:"",base:45000,sellMin:42000,autoMin:0},
+  Lenovo_X280_i5_8th:{name:"Lenovo X280 i5 8th",brand:"Lenovo",model:"X280",proc:"i5",gen:"8th",gpu:"",base:50000,sellMin:48000,autoMin:0},
+  Lenovo_x380_YOGA_i5_8th:{name:"Lenovo x380 YOGA i5 8th",brand:"Lenovo",model:"x380 YOGA",proc:"i5",gen:"8th",gpu:"",base:68000,sellMin:65000,autoMin:0},
+  Lenovo_x380_YOGA_i7_8th:{name:"Lenovo x380 YOGA i7 8th",brand:"Lenovo",model:"x380 YOGA",proc:"i7",gen:"8th",gpu:"",base:80000,sellMin:77000,autoMin:0},
+};
+const SEED_CFG = { aliGate:'5520', bilalPhone:'', yousufPhone:'' };
+
+/* ==================================================================
+   6. BOOT + LOCK (Yousuf -> Bilal 15 min rule)
+   ================================================================== */
+function safeRender(){
+  if(document.querySelector('.modal')) return;
+  const ae=document.activeElement;
+  if(ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+  render();
+}
+function achatArr(){ return Object.entries(S.achat||{}).map(([id,m])=>({id,...m})).sort((a,b)=>(a.at||0)-(b.at||0)); }
+function lockAt(){            // pehla bilal msg jiska yousuf ne jawab nahi diya
+  let t=0;
+  achatArr().forEach(m=>{ if(m.f==='yousuf') t=0; else if(m.f==='bilal' && !t) t=m.at; });
+  return t;
+}
+const yLocked = ()=> S.me && S.me.id==='yousuf' && lockAt() && (S.now-lockAt() > 15*MIN);
+function achatUnread(){       // mere liye trailing unread
+  const meK = S.me.id==='bilal' ? 'bilal' : 'yousuf';
+  const a=achatArr(); let c=0;
+  for(let i=a.length-1;i>=0;i--){ if(a[i].f===meK) break; c++; }
+  return c;
+}
+function boot(){
+  if(!LIVE){ _set(LOCAL,'staff',SEED_STAFF); _set(LOCAL,'models',SEED_MODELS); _set(LOCAL,'config',SEED_CFG); }
+  DB.watch('leads', v=>{ S.leads=v||{}; safeRender(); });
+  DB.watch('cods',  v=>{ S.cods =v||{}; safeRender(); });
+  DB.watch('reqs',  v=>{ S.reqs =v||{}; safeRender(); });
+  DB.watch('achat', v=>{ S.achat=v||{}; safeRender(); });
+  DB.watch('staff', v=>{ if(!v&&LIVE){ DB.set('staff',SEED_STAFF); return; } S.staff=v||{}; safeRender(); });
+  DB.watch('models',v=>{ if(!v&&LIVE){ DB.set('models',SEED_MODELS); return; } S.models=v||{}; safeRender(); });
+  DB.watch('config',v=>{ if(!v&&LIVE){ DB.set('config',SEED_CFG); return; } S.cfg=v||SEED_CFG; safeRender(); });
+  setInterval(()=>{ S.now=Date.now(); if(S.me) safeRender(); }, 20000);
+  document.addEventListener('click', ev=>{
+    if(!yLocked()) return;
+    if(ev.target.closest('#achatBox') || ev.target.closest('.lockbar')) return;
+    ev.stopPropagation(); ev.preventDefault();
+    toast('Pehle BILAL ko reply karein','bad');
+    if(S.tab!=='dash' || S.full || S.codFull){ S.tab='dash'; S.full=null; S.codFull=null; render(); }
+    const b=$('#achatBox'); if(b) b.scrollIntoView({behavior:'smooth'});
+  }, true);
+}
+
+/* ==================================================================
+   7. LOGIN
+   ================================================================== */
+let pinBuf='', whoSel=null;
+window.setWho = v=>{ whoSel=v; };
+function loginView(){
+  const staff=Object.entries(S.staff);
+  if(!whoSel && staff.length) whoSel=staff[0][0];
+  return `<div class="login"><div class="lgc">
+    <div class="lg">Deal<em>Desk</em></div>
+    <div class="lsub">Denzen Computers — leads, rates, COD. Sab yahan.</div>
+    ${LIVE?'':'<div class="banner">Demo mode — internet/Firebase nahi mila. Asal test Netlify wali site par karein.</div>'}
+    <div class="f"><label>Kaun ho?</label>
+      <select class="in" id="who" onchange="setWho(this.value)">${staff.map(([id,s])=>`<option value="${id}" ${whoSel===id?'selected':''}>${esc(s.name)}${isAdm(s.role)?' (Admin)':''}</option>`).join('')}</select>
+    </div>
+    <div class="dots">${[0,1,2,3].map(i=>`<i class="${i<pinBuf.length?'f':''}"></i>`).join('')}</div>
+    <div class="pins">
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="pin('${n}')">${n}</button>`).join('')}
+      <button onclick="pin('c')">←</button><button onclick="pin('0')">0</button>
+      <button onclick="pin('go')" style="background:var(--blu);color:#fff;border-color:var(--blu)">OK</button>
+    </div>
+    <div id="lerr" class="err"></div>
+  </div></div>`;
+}
+window.pin = v=>{
+  if(v==='c'){ pinBuf=pinBuf.slice(0,-1); }
+  else if(v==='go'){
+    const id=whoSel||($('#who')||{}).value, st=S.staff[id];
+    if(st && st.pin===pinBuf){ S.me={id,...st}; S.tab='dash'; pinBuf=''; S.aliOpen=false; render(); return; }
+    pinBuf=''; render(); const e=$('#lerr'); if(e) e.textContent='PIN ghalat hai. Dobara koshish karein.'; return;
+  }
+  else if(pinBuf.length<4){ pinBuf+=v; }
+  render();
+  if(pinBuf.length===4) setTimeout(()=>window.pin('go'),120);
+};
+window.logout = ()=>{ S.me=null; pinBuf=''; S.full=null; S.codFull=null; render(); };
+
+/* ==================================================================
+   8. SHELL
+   ================================================================== */
+const TABS_S = [['dash','Meri Leads'],['new','+ Nayi Lead'],['cod','COD'],['reqs','Demands'],['calc','Calculator']];
+function tabsA(){ const t=[['dash','Dashboard'],['inbox','Inbox'],['cod','COD'],['reqs','Demands'],['rates','Rates'],['report','Report']];
+  if(S.me.role==='boss') t.push(['team','Team']); return t; }
+
+function render(){
+  if(!S.me){ app.innerHTML=loginView(); return; }
+  const adm=isAdm(S.me.role);
+  const all=myLeads();
+  const unr=all.reduce((s,l)=>s+unread(l),0);
+  const pend=all.filter(l=>l.status==='pending').length;
+  const act =all.filter(l=>isOpenL(l)&&court(l)==='r').length;
+  const codSent=myCods().filter(c=>c.status==='sent').length;
+  const reqOpen=myReqs().filter(r=>r.status==='open').length;
+  const reqAns =myReqs().filter(r=>r.status==='answered'&&r.by===S.me.id).length;
+  const tabs=adm?tabsA():TABS_S;
+  const pip=k=>{
+    if(k==='dash'  && !adm) return act;
+    if(k==='inbox') return pend+unr;
+    if(k==='cod')   return adm?codSent:0;
+    if(k==='reqs')  return adm?reqOpen:reqAns;
+    return 0; };
+  const locked=yLocked();
+  app.innerHTML=`
+  <div class="top">
+    <div class="brand">Deal<span>Desk</span><small>Denzen</small></div>
+    <div class="who"><b>${esc(S.me.name)}</b>${adm?'Admin':'Salesperson'} · <a href="#" onclick="logout();return false">Logout</a></div>
+  </div>
+  <div class="wrap">
+    ${LIVE?'':'<div class="banner">Demo mode — data refresh par reset hoga. Asal test hosted site par karein.</div>'}
+    ${locked?'<div class="lockbar">🔒 BILAL ka message 15+ min se pending hai — pehle reply karein, tab hi baqi cheezein chalengi.</div>':''}
+    <div class="tabs">
+      ${tabs.map(([k,t])=>`<div class="tab ${S.tab===k?'on':''} ${k==='cod'&&codSent&&adm?'alert':''}" onclick="go('${k}')">${t}${pip(k)?`<span class="pip">${pip(k)}</span>`:''}</div>`).join('')}
+    </div>
+    <div id="view"></div>
+  </div>
+  ${adm?'':`<div class="bar">
+     <button class="btn p" onclick="go('new')">+ Nayi Lead</button>
+     <button class="btn" onclick="go('dash')">Meri Leads${act?' ('+act+')':''}</button>
+   </div>`}
+  ${S.full?fsLead():''}
+  ${S.codFull?fsCod():''}`;
+  const v=$('#view');
+  if(v) v.innerHTML=({ dash:()=>adm?viewDashA():viewDashS(), inbox:viewInbox, new:viewNew,
+    cod:viewCod, codnew:viewCodNew, reqs:viewReqs, rates:viewRates, report:viewReport,
+    team:viewTeam, calc:viewCalc }[S.tab]||(adm?viewDashA:viewDashS))();
+  if(S.tab==='new') wireNew();
+  if(S.tab==='calc') wireCalcTab();
+  if(S.tab==='codnew') wireCodForm();
+}
+window.go=k=>{ if(S.tab==='new') keepDraft(); if(S.tab==='codnew') keepCod();
+  S.tab=k; if(k!=='dash') S.sp=null; render(); window.scrollTo(0,0); };
+window.toggleDrop=k=>{ S.open[k]=!S.open[k]; render(); };
+window.spSel=k=>{ S.sp=k||null; render(); window.scrollTo(0,0); };
+window.openFull=id=>{ S.full=id; render(); };
+window.closeFull=()=>{ S.full=null; render(); };
+window.openCod=id=>{ S.codFull=id; render(); };
+window.closeCod=()=>{ S.codFull=null; render(); };
+
+/* ==================================================================
+   9. CARDS — 1-inch compact + groups
+   ================================================================== */
+function trio(l){
+  const g=(Number(l.floor)||0)-(Number(l.offer)||0);
+  return `<div class="trio">
+    <div><i>Least</i><b>${K(l.floor)}</b></div>
+    <div><i>Customer</i><b>${K(l.offer)}</b></div>
+    <div class="${g>0?'bad':'ok'}"><i>Farq</i><b>${g>0?'−':'+'}${K(Math.abs(g))}</b></div>
+  </div>`;
+}
+function ccard(l){
+  const adm=isAdm(S.me.role), st=STAT[l.status]||STAT.pending, u=unread(l);
+  const who=(S.staff[l.by]||{}).name||l.byName||'—';
+  let side2='';
+  if(l.status==='booked') side2=`<span class="chip ${dayDiff(l.visitDate)<=1?'c-red':'c-amb'}">${dLabel(l.visitDate)}</span>`;
+  else if(l.priority==='urgent'&&isOpenL(l)) side2='<span class="chip c-red">URGENT</span>';
+  return `<div class="cc ${court(l)}" onclick="openFull('${l.id}')">
+    <div class="row1">
+      <div style="min-width:0">
+        <div class="nm">${esc(l.name)}</div>
+        <div class="sub">${esc(l.model)}${adm?' · '+esc(who):''}</div>
+      </div>
+      <div class="end">${side2}<span class="chip ${st.c}">${st.t}</span>${u?`<span class="ub">${u}</span>`:''}</div>
+    </div>
+    ${trio(l)}
+  </div>`;
+}
+function grp(list,title,hint){
+  if(!list.length) return '';
+  return `<div class="sec-h"><h3>${title}</h3><span class="ct">${list.length}</span>${hint?`<span class="ct" style="margin-left:auto">${hint}</span>`:''}</div>`
+    + list.map(ccard).join('');
+}
+function dropGrp(key,title,list,inner){
+  if(!list.length) return '';
+  const open=!!S.open[key];
+  return `<div class="drop-h" onclick="toggleDrop('${key}')"><h3>${title}</h3><span class="ct">${list.length}</span><span class="ch">${open?'▾ band karein':'▸ kholein'}</span></div>`
+    + (open ? (inner||list.map(ccard).join('')) : '');
+}
+const empty=(t,s)=>`<div class="empty"><b>${t}</b>${s||''}</div>`;
+
+/* ==================================================================
+   10. FULL-SCREEN LEAD + CHAT
+   ================================================================== */
+function fsLead(){
+  const l0=S.leads[S.full]; if(!l0 || !canSee(l0.by)) return '';
+  const l={id:S.full,...l0};
+  const adm=isAdm(S.me.role), st=STAT[l.status]||STAT.pending;
+  const who=(S.staff[l.by]||{}).name||l.byName||'—';
+  const my=side(S.me.role);
+  const g=(l.floor||0)-(l.offer||0);
+  const msgs=(l.chat||[]).map(m=>`<div class="m ${m.sd===my?'me':'th'}">
+      ${m.sd===my?'':`<div class="w">${esc(m.w)}</div>`}
+      <div>${esc(m.t)}</div><div class="tm">${stamp(m.at)}</div>
+    </div>`).join('');
+  return `<div class="fs"><div class="fhead">
+      <button class="xbig" onclick="closeFull()">✕</button>
+      <div style="min-width:0">
+        <div class="nm">${esc(l.name)}</div>
+        <div class="ph">${esc(l.phone)} · ${esc(who)}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
+        ${l.priority==='urgent'?'<span class="chip c-red">URGENT</span>':''}
+        <span class="chip ${st.c}">${st.t}</span>
+      </div>
+    </div>
+    <div class="inner">
+      <div class="card">
+        <div class="kvg">
+          <div class="kv"><i>Budget</i><b class="mono">${PKR(l.budget)}</b></div>
+          <div class="kv"><i>Kis kaam ke liye</i><b>${esc(l.usage||'—')}</b></div>
+          <div class="kv"><i>Model</i><b>${esc(l.model)}</b></div>
+          <div class="kv"><i>Spec</i><b>${l.ram}GB / ${l.ssd>=1024?(l.ssd/1024)+'TB':l.ssd+'GB'}</b></div>
+          <div class="kv"><i>List rate</i><b class="mono">${PKR(l.list)}</b></div>
+          <div class="kv"><i>Least (company)</i><b class="mono" style="color:var(--gold-tx)">${PKR(l.floor)}</b></div>
+          <div class="kv"><i>Customer offer</i><b class="mono">${PKR(l.offer)}</b></div>
+          <div class="kv" style="${g>0?'background:var(--red-bg);border-color:#F5C6C8':'background:var(--grn-bg);border-color:#A9DEC0'}">
+            <i>Farq</i><b class="mono" style="color:${g>0?'var(--red-tx)':'var(--grn-tx)'}">${g>0?'−':'+'}${PKR(Math.abs(g))}</b></div>
+        </div>
+        ${l.detail?`<div class="note"><div class="lbl">Customer ki detail</div>${esc(l.detail)}</div>`:''}
+        ${l.finalRate?`<div class="note hl"><div class="lbl">Final rate</div><b class="mono" style="color:var(--grn-tx)">${PKR(l.finalRate)}</b></div>`:''}
+        ${l.status==='booked'?`<div class="note" style="border-color:#EBD49A"><div class="lbl">Customer aane ki date</div><b class="mono">${l.visitDate}</b> — ${dLabel(l.visitDate)}</div>`:''}
+        ${l.status==='lost'?`<div class="note urg"><div class="lbl">Lost — wajah</div>${esc(l.lostReason||'—')}</div>`:''}
+      </div>
+
+      <div class="card">
+        <div class="sec-h" style="margin-top:0"><h3>Baat-cheet</h3><span class="ct">${(l.chat||[]).length}</span></div>
+        <div class="msgs">${msgs||'<div class="hint">Abhi koi message nahi — neeche likhein.</div>'}</div>
+        <div class="chatrow">
+          <input class="in" id="chatIn" placeholder="Message likhein…" onkeydown="if(event.key==='Enter')chatSend('${l.id}')">
+          <button class="btn p" onclick="chatSend('${l.id}')">Bhejein</button>
+        </div>
+        <div class="hint">Badge tab hatega jab doosri taraf se reply aayega — sirf dekhne se nahi.</div>
+      </div>
+
+      <div class="card">
+        ${fsBtns(l)}
+        <div class="row">
+          <a class="btn sm" href="tel:${esc(l.phone)}">📞 Call customer</a>
+          <a class="btn sm" target="_blank" href="${waL(l.phone,'Assalam o alaikum '+l.name+' — Denzen Computers se. Aapke '+l.model+' ke baare mein baat karni thi.')}">WhatsApp</a>
+          ${isOpenL(l)?`<button class="btn dgr sm" onclick="lostSheet('${l.id}')">Lost / Delete</button>`
+                      :`<button class="btn gh sm" onclick="reopenL('${l.id}')">Dobara kholein</button>
+                        <button class="btn dgr sm" onclick="delLead('${l.id}',1)">🗑 Permanent delete</button>`}
+        </div>
+      </div>
+    </div></div>`;
+}
+function fsBtns(l){
+  const adm=isAdm(S.me.role);
+  if(adm){
+    if(l.status==='pending') return `<div class="row" style="margin-top:0">
+      <button class="btn ok wide" onclick="ansLead('${l.id}','approve')">✓ Rate approve</button>
+      <button class="btn dgr wide" onclick="ansLead('${l.id}','reject')">✕ Reject</button></div>`;
+    if(isOpenL(l)) return `<div class="row" style="margin-top:0">
+      <button class="btn sm" onclick="ansLead('${l.id}','approve')">Rate/jawab badlein</button>
+      <button class="btn ok sm" onclick="wonSheet('${l.id}')">Purchase ✓</button></div>`;
+    return '';
+  }
+  if(l.status==='pending') return `<div class="hint" style="margin-bottom:4px">Admin ke jawab ka intezar — koi baat ho to upar chat mein likh dein.</div>`;
+  if(isAns(l)) return `<div class="row" style="margin-top:0">
+    <button class="btn p wide" onclick="bookSheet('${l.id}')">📅 Date mili</button>
+    <button class="btn ok wide" onclick="wonSheet('${l.id}')">Purchase ✓</button></div>`;
+  if(l.status==='booked') return `<div class="row" style="margin-top:0">
+    <button class="btn ok wide" onclick="wonSheet('${l.id}')">Purchase ho gayi ✓</button>
+    <button class="btn sm" onclick="bookSheet('${l.id}')">Nayi date</button></div>`;
+  return '';
+}
+function postChat(id,text,extra){
+  const l=S.leads[id]; if(!l) return;
+  const msg={w:S.me.name, sd:side(S.me.role), t:text, at:Date.now()};
+  const chat=(l.chat||[]).concat([msg]);
+  DB.update('leads/'+id, Object.assign({chat, updatedAt:Date.now()}, extra||{}));
+}
+window.chatSend=id=>{
+  const el=$('#chatIn'); if(!el) return;
+  const t=el.value.trim(); if(!t) return;
+  postChat(id,t); el.value='';
+};
+
+/* ---------- actions ---------- */
+function sheet(html){
+  const d=document.createElement('div'); d.className='modal';
+  d.innerHTML=`<div class="sheet">${html}</div>`;
+  d.onclick=ev=>{ if(ev.target===d) d.remove(); };
+  document.body.appendChild(d); return d;
+}
+const closeSheet=()=>document.querySelectorAll('.modal').forEach(m=>m.remove());
+window.closeSheet=closeSheet;
+
+window.ansLead=(id,mode)=>{
+  const l=S.leads[id];
+  const sug=[l.offer, Math.round(((l.offer||0)+(l.floor||0))/2/500)*500, l.floor];
+  sheet(`<h3>${mode==='approve'?'Rate approve karein':'Reject karein'}</h3>
+    <div class="hint" style="margin-bottom:10px">${esc(l.name)} · ${esc(l.model)} · customer ${PKR(l.offer)} · least ${PKR(l.floor)}</div>
+    ${mode==='approve'?`<div class="f"><label>Kis rate par de rahe hain</label>
+      <div class="seg" style="margin-bottom:8px">${sug.map(v=>`<button onclick="document.getElementById('aRate').value=${v}">${K(v)}</button>`).join('')}</div>
+      <input class="in mono" id="aRate" inputmode="numeric" value="${l.offer}"></div>`:''}
+    <div class="f"><label>Salesperson ke liye message ${mode==='approve'?'':'<i>*</i>'}</label>
+      <textarea class="in" id="aText" placeholder="${mode==='approve'?'Is rate par de do, warranty 3 mahine batana.':'Is rate par nahi ja sakte, kyunki…'}"></textarea></div>
+    <div class="row"><button class="btn ${mode==='approve'?'ok':'dgr'} wide" onclick="saveAns('${id}','${mode}')">${mode==='approve'?'Approve':'Reject'}</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.saveAns=(id,mode)=>{
+  const txt=($('#aText')?$('#aText').value.trim():'');
+  if(mode!=='approve' && !txt){ toast('Wajah likhna zaroori hai','bad'); return; }
+  const rate=mode==='approve' ? (Number(($('#aRate')||{}).value)||S.leads[id].offer) : null;
+  const body=(mode==='approve'?'✅ APPROVE — '+PKR(rate):'❌ REJECT')+(txt?' · '+txt:'');
+  postChat(id, body, { status:mode==='approve'?'approved':'rejected',
+    finalRate:rate!=null?rate:(S.leads[id].finalRate||null), ansAt:Date.now() });
+  closeSheet(); toast(mode==='approve'?'Approve — salesperson ko chala gaya':'Reject bhej diya');
+};
+window.bookSheet=id=>{
+  const l=S.leads[id];
+  sheet(`<h3>Customer kab aa raha hai</h3>
+    <div class="f"><label>Date <i>*</i></label><input type="date" class="in mono" id="bDate" min="${today()}" value="${l.visitDate||today()}"></div>
+    <div class="f"><label>Kya tay hua</label><textarea class="in" id="bNote" placeholder="98k par razi, itwaar ko cash le kar aayega."></textarea></div>
+    <div class="row"><button class="btn p wide" onclick="saveBook('${id}')">Date save karein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.saveBook=id=>{
+  const d=$('#bDate').value; if(!d){ toast('Date daalein','bad'); return; }
+  const n=$('#bNote').value.trim();
+  postChat(id, '📅 Date tay: '+d+(n?' — '+n:''), {status:'booked', visitDate:d});
+  closeSheet(); toast('Date lag gayi — us din card red hoga');
+};
+window.wonSheet=id=>{
+  const l=S.leads[id];
+  sheet(`<h3>Purchase</h3>
+    <div class="f"><label>Final rate</label><input class="in mono" id="wRate" inputmode="numeric" value="${l.finalRate||l.offer}"></div>
+    <div class="row"><button class="btn ok wide" onclick="saveWon('${id}')">Purchase confirm</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.saveWon=id=>{
+  const r=Number($('#wRate').value)||S.leads[id].offer;
+  postChat(id, '🟢 Purchase — '+PKR(r)+'. Nice job! 💪', {status:'won', finalRate:r, wonAt:Date.now()});
+  closeSheet(); toast('Purchase — mubarak ho!');
+};
+const LOST_WHY=['Rate par baat nahi bani','Kahin sasta mil gaya','Spec hamare paas nahi','Customer ne rok diya','Phone nahi utha raha','Aur wajah'];
+window.lostSheet=id=>{
+  sheet(`<h3>Lost ya Delete?</h3>
+    <div class="f"><label>Wajah (report ke liye)</label>
+      <select class="in" id="lWhy">${LOST_WHY.map(w=>`<option>${w}</option>`).join('')}</select></div>
+    <div class="row">
+      <button class="btn wide" onclick="saveLost('${id}')">Lost section mein daalein</button>
+      <button class="btn dgr wide" onclick="delLead('${id}',1)">🗑 Permanent delete</button></div>
+    <div class="hint" style="margin-top:8px">Lost section se bhi baad mein permanent delete kar sakte hain. Delete dono taraf se hata deta hai.</div>
+    <div class="row"><button class="btn gh wide" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.saveLost=id=>{
+  const why=($('#lWhy')||{}).value||'—';
+  postChat(id, '⚪ Lost — '+why, {status:'lost', lostReason:why, lostAt:Date.now()});
+  closeSheet(); toast('Lost section mein chali gayi');
+};
+window.delLead=(id,ask)=>{
+  if(ask){ if(!confirm('Pakka permanent delete? Ye dono taraf se hat jayegi.')) return; }
+  DB.set('leads/'+id,null);
+  if(S.full===id) S.full=null;
+  closeSheet(); render(); toast('Delete ho gayi');
+};
+window.reopenL=id=>{
+  const l=S.leads[id];
+  postChat(id,'↩ Lead dobara kholi',{status: l.ansAt?'approved':'pending'});
+  toast('Dobara khul gayi');
+};
+
+/* ==================================================================
+   11. DASHBOARDS
+   ================================================================== */
+function lostInner(list){
+  return list.map(l=>`<div class="cc x" onclick="openFull('${l.id}')">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(l.name)}</div>
+      <div class="sub">${esc(l.model)} · ${esc(l.lostReason||'')}</div></div>
+      <div class="end"><span class="chip c-gry">Lost</span></div></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm" onclick="event.stopPropagation();reopenL('${l.id}')">Dobara kholein</button>
+      <button class="btn dgr sm" onclick="event.stopPropagation();delLead('${l.id}',1)">🗑 Permanent delete</button>
+    </div></div>`).join('');
+}
+function codAlertsS(){
+  const mine=myCods().filter(c=>c.status==='sent'||c.status==='accepted'||c.status==='slipped');
+  return mine.map(c=>{
+    if(c.status==='sent'){
+      const w=Math.floor((S.now-(c.sentAt||0))/MIN);
+      if(w<30) return `<div class="alert red" onclick="openCod('${c.id}')">⏳ ${esc(c.name)} — YOUSUF ke jawab ka intezar · <span class="tmr">${30-w} min</span></div>`;
+      return `<div class="alert red big pulse" onclick="openCod('${c.id}')">📞 CALL YOUSUF TO REPLY COD — ${esc(c.name)} (${ago(c.sentAt)} se)</div>`;
+    }
+    if(c.status==='accepted'){
+      const end=(c.acceptedAt||0)+(Number(c.hrs)||0)*HOUR, left=end-S.now;
+      const t=left>0?Math.floor(left/HOUR)+'h '+Math.floor((left%HOUR)/MIN)+'m baqi':'waqt guzar gaya';
+      return `<div class="alert ${left>0?'org':'red'}" onclick="openCod('${c.id}')">🚚 ${esc(c.name)} — Dispatch ${esc(c.day||'')} · slip ka intezar · <span class="tmr">${t}</span></div>`;
+    }
+    return `<div class="alert grn" onclick="openCod('${c.id}')">📄 ${esc(c.name)} — Slip aa gayi, download karein</div>`;
+  }).join('');
+}
+function viewDashS(){
+  const all=myLeads();
+  const act=all.filter(l=>isAns(l));
+  const pend=all.filter(l=>l.status==='pending');
+  const bk=all.filter(l=>l.status==='booked');
+  const ret=bk.filter(l=>dayDiff(l.visitDate)<=1), bkF=bk.filter(l=>dayDiff(l.visitDate)>1);
+  const won=all.filter(l=>l.status==='won'), lo=all.filter(l=>l.status==='lost');
+  const codAct=myCods().filter(c=>c.status==='sent'||c.status==='accepted').length;
+  return `<div class="master" style="grid-template-columns:repeat(4,1fr)">
+      <div class="red"><div class="n ${act.length?'pulse':''}">${act.length}</div><div class="l">Jawab aa gaya</div></div>
+      <div class="amb"><div class="n">${ret.length}</div><div class="l">Retouch</div></div>
+      <div class="blu"><div class="n">${codAct}</div><div class="l">COD active</div></div>
+      <div class="grn"><div class="n">${won.length}</div><div class="l">Purchase</div></div>
+    </div>`
+    + codAlertsS()
+    + grp(act,'Jawab aa gaya — action lein')
+    + grp(ret,'Retouch — customer aaj/kal aane wala hai')
+    + grp(pend,'Jawab ka intezar — admin ke paas')
+    + grp(bkF,'Aane wali dates')
+    + dropGrp('won','Purchase',won)
+    + dropGrp('lost','Lost',lo,lostInner(lo))
+    + (all.length?'':empty('Koi lead nahi','Neeche "+ Nayi Lead" se shuru karein.'));
+}
+function achatBox(){
+  const other=S.me.id==='bilal'?'YOUSUF':'BILAL';
+  const meK=S.me.id==='bilal'?'bilal':'yousuf';
+  const u=achatUnread();
+  const locked=yLocked();
+  const late=S.me.id==='bilal' && lockAt() && (S.now-lockAt()>15*MIN);
+  const msgs=achatArr().slice(-30).map(m=>`<div class="m ${m.f===meK?'me':'th'}">
+      ${m.f===meK?'':`<div class="w">${esc(m.f.toUpperCase())}</div>`}<div>${esc(m.t)}</div><div class="tm">${stamp(m.at)}</div></div>`).join('');
+  return `<div class="card" id="achatBox" style="${locked?'border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)':''}">
+    <div class="sec-h" style="margin-top:0"><h3>${other}</h3>${u?`<span class="ub">${u}</span>`:''}
+      ${locked?'<span class="chip c-red" style="margin-left:auto">REPLY PENDING 15+ MIN</span>':(late?'<span class="chip c-red" style="margin-left:auto">Yousuf ka reply pending</span>':'')}</div>
+    <div class="msgs" style="max-height:260px;overflow:auto">${msgs||'<div class="hint">Seedha message yahan se karein.</div>'}</div>
+    <div class="chatrow">
+      <input class="in" id="aIn" placeholder="Message ${other} ko…" onkeydown="if(event.key==='Enter')sendA()">
+      <button class="btn p" onclick="sendA()">Bhejein</button>
+    </div></div>`;
+}
+window.sendA=()=>{
+  const el=$('#aIn'); if(!el) return; const t=el.value.trim(); if(!t) return;
+  const meK=S.me.id==='bilal'?'bilal':'yousuf';
+  DB.push('achat',{f:meK,t,at:Date.now()}); el.value='';
+};
+function viewDashA(){
+  const all=myLeads();
+  if(S.sp) return spDetail(all);
+  const open=all.filter(isOpenL);
+  const pend=open.filter(l=>l.status==='pending');
+  const urg=open.filter(l=>l.priority==='urgent');
+  const won=all.filter(l=>l.status==='won'), lo=all.filter(l=>l.status==='lost');
+  const codSent=myCods().filter(c=>c.status==='sent');
+  const sps=Object.entries(S.staff).filter(([k,s])=>s.role==='sales' && (S.me.role==='boss' || !s.prot));
+  const aliRow = S.me.role==='boss' ? '' : '';
+  return `<div class="master" style="grid-template-columns:repeat(3,1fr)">
+      <div class="gry"><div class="n">${all.length}</div><div class="l">Kul leads</div></div>
+      <div class="red"><div class="n ${pend.length?'pulse':''}">${pend.length}</div><div class="l">Jawab dena hai</div></div>
+      <div class="red"><div class="n">${urg.length}</div><div class="l">Urgent open</div></div>
+      <div class="blu"><div class="n">${codSent.length}</div><div class="l">COD nayi</div></div>
+      <div class="grn"><div class="n">${won.length}</div><div class="l">Purchase</div></div>
+      <div class="gry"><div class="n">${lo.length}</div><div class="l">Lost</div></div>
+    </div>`
+    + ((S.me.id==='bilal'||S.me.id==='yousuf')?achatBox():'')
+    + (codSent.length?`<div class="alert red big ${codSent.length?'pulse':''}" onclick="go('cod')">🧾 COD — ${codSent.length} nayi, jawab dein</div>`:'')
+    + `<div class="sec-h"><h3>Salesperson</h3><span class="ct">naam par tap karein</span></div>`
+    + sps.map(([k,s])=>{
+        const gated = s.prot && S.me.role==='boss' && !S.aliOpen;
+        const m=gated?[]:all.filter(l=>l.by===k);
+        const w=m.filter(l=>l.status==='won').length, ll=m.filter(l=>l.status==='lost').length, op=m.filter(isOpenL).length;
+        return `<div class="cc" onclick="${gated?`gateSheet()`:`spSel('${k}')`}">
+          <div class="row1"><div style="min-width:0"><div class="nm">${esc(s.name)} ${s.prot?'🔒':''}</div>
+            <div class="sub">${gated?'Private — password se kholein':`${m.length} leads · ${op} open · ${w} purchase · ${ll} lost`}</div></div>
+          <div class="end"><span class="chip c-blu">${gated?'Kholein':'Dekhein →'}</span></div></div></div>`;
+      }).join('')
+    + grp(pend.slice(0,4),'Jawab dena hai — taaza','sab Inbox mein');
+}
+function spDetail(all){
+  const s=S.staff[S.sp]||{}; const m=all.filter(l=>l.by===S.sp);
+  const pend=m.filter(l=>l.status==='pending'), ans=m.filter(isAns), bk=m.filter(l=>l.status==='booked'),
+        won=m.filter(l=>l.status==='won'), lo=m.filter(l=>l.status==='lost');
+  return `<div class="row" style="margin:0 0 10px"><button class="btn sm" onclick="spSel(null)">← Wapis</button></div>
+    <div class="sec-h"><h3>${esc(s.name||'—')}</h3><span class="ct">${m.length} leads</span></div>
+    <div class="master" style="grid-template-columns:repeat(4,1fr)">
+      <div class="red"><div class="n">${pend.length}</div><div class="l">Pending</div></div>
+      <div class="amb"><div class="n">${bk.length}</div><div class="l">Date tay</div></div>
+      <div class="grn"><div class="n">${won.length}</div><div class="l">Purchase</div></div>
+      <div class="gry"><div class="n">${lo.length}</div><div class="l">Lost</div></div>
+    </div>`
+    + grp(pend,'Jawab dena hai') + grp(ans,'Jawab diya hua') + grp(bk,'Date tay')
+    + dropGrp('spwon','Purchase',won) + dropGrp('splost','Lost',lo,lostInner(lo))
+    + (m.length?'':empty('Is salesperson ki koi lead nahi'));
+}
+window.gateSheet=()=>{
+  sheet(`<h3>AHMED ALI — private section</h3>
+    <div class="f"><label>Password</label><input type="password" class="in mono" id="gPin" maxlength="6" inputmode="numeric"></div>
+    <div id="gerr" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="gateGo()">Kholein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+  setTimeout(()=>{ const g=$('#gPin'); if(g) g.focus(); },60);
+};
+window.gateGo=()=>{
+  const v=($('#gPin')||{}).value||'';
+  if(v===(S.cfg.aliGate||'5520')){ S.aliOpen=true; closeSheet(); render(); toast('AHMED ALI ka section khul gaya'); }
+  else { const e=$('#gerr'); if(e) e.textContent='Password ghalat hai.'; }
+};
+function viewInbox(){
+  const all=myLeads(), open=all.filter(isOpenL);
+  const pend=open.filter(l=>l.status==='pending')
+    .sort((a,b)=> ({urgent:0,normal:1}[a.priority||'normal']-{urgent:0,normal:1}[b.priority||'normal']) || (a.sentAt||0)-(b.sentAt||0));
+  const unr=open.filter(l=>l.status!=='pending' && unread(l)>0);
+  const lockedNote = (S.me.role==='boss' && !S.aliOpen && Object.values(S.leads).some(l=>prot(l.by)&&l.status==='pending'))
+    ? `<div class="alert org" onclick="gateSheet()">🔒 AHMED ALI ki pending lead(s) — password se kholein</div>` : '';
+  return lockedNote
+    + (pend.length? grp(pend,'Aapka jawab chahiye','urgent pehle') : empty('Inbox saaf hai','Koi pending lead nahi.'))
+    + grp(unr,'Chat mein naya message');
+}
+
+/* ==================================================================
+   12. NAYI LEAD + CALCULATOR (search-bar wala)
+   ================================================================== */
+let draft={priority:'normal', ram:8, ssd:256};
+function keepDraft(){
+  ['name','phone','budget','usage','detail','offer'].forEach(k=>{
+    const el=$('#f'+k[0].toUpperCase()+k.slice(1)); if(el) draft[k]=el.value; });
+  if($('#cRam')) draft.ram=+$('#cRam').value;
+  if($('#cSsd')) draft.ssd=+$('#cSsd').value;
+}
+function modelSearchUI(sel){
+  const m=sel?S.models[sel]:null;
+  return `<div class="f"><label>Model <i>*</i> — search karein</label>
+    ${m?`<div class="mpick"><span>${esc(m.name)}</span><button class="btn sm gh" onclick="clearM()">Badlein</button></div>`
+       :`<input class="in" id="mq" placeholder="Type karein: 5420, EliteBook, T14…" oninput="mSearch()" autocomplete="off">
+        <div class="mlist" id="mList"></div>`}
+  </div>`;
+}
+window.mSearch=()=>{
+  const q=(($('#mq')||{}).value||'').toLowerCase().trim();
+  const el=$('#mList'); if(!el) return;
+  if(!q){ el.innerHTML='<div class="hint" style="padding:9px 12px">Model ka naam likhna shuru karein…</div>'; return; }
+  const hits=Object.entries(S.models).filter(([k,m])=> (m.name||'').toLowerCase().includes(q)).slice(0,30);
+  el.innerHTML = hits.length
+    ? hits.map(([k,m])=>`<button onclick="pickM('${k}')"><span>${esc(m.name)}</span><span class="pr">${K(m.base)}</span></button>`).join('')
+    : '<div class="hint" style="padding:9px 12px">Koi model nahi mila — Rates tab mein add hota hai.</div>';
+};
+window.pickM=k=>{ keepDraft(); draft.model=k; render(); };
+window.clearM=()=>{ keepDraft(); draft.model=null; render(); };
+function specUI(){
+  return `<div class="g2">
+    <div class="f"><label>RAM</label><select class="in" id="cRam" onchange="recalcOut()">${Object.keys(RAM_D).map(r=>`<option value="${r}" ${String(draft.ram||8)===r?'selected':''}>${r} GB</option>`).join('')}</select></div>
+    <div class="f"><label>Storage</label><select class="in" id="cSsd" onchange="recalcOut()">${Object.keys(SSD_D).map(s=>`<option value="${s}" ${String(draft.ssd||256)===s?'selected':''}>${s>=1024?(s/1024)+' TB':s+' GB'}</option>`).join('')}</select></div>
+  </div>
+  <div class="calcout">
+    <div><div class="k">List rate</div><div class="v" id="oList">—</div></div>
+    <div><div class="k">Least (company)</div><div class="v" id="oFloor" style="color:var(--gold-tx)">—</div></div>
+    <div><div class="k">Farq</div><div class="v" id="oGap">—</div></div>
+  </div>`;
+}
+window.recalcOut=()=>{
+  keepDraft();
+  const r=draft.model?calcRate(draft.model,draft.ram,draft.ssd):null;
+  const L=$('#oList'),F=$('#oFloor'),G=$('#oGap');
+  if(L) L.textContent=r?PKR(r.list):'—';
+  if(F) F.textContent=r?PKR(r.floor):'—';
+  if(G){ const off=Number((($('#fOffer')||{}).value)||draft.offer)||0;
+    if(r&&off){ const g=r.floor-off;
+      G.textContent=(g>0?'−':'+')+PKR(Math.abs(g)).replace('Rs ','');
+      G.style.color=g>0?'var(--red-tx)':'var(--grn-tx)';
+    } else { G.textContent='—'; G.style.color='var(--txt)'; } }
+};
+function wireNew(){ const o=$('#fOffer'); if(o){ o.oninput=recalcOut; } recalcOut(); const q=$('#mq'); if(q) mSearch(); }
+function wireCalcTab(){ recalcOut(); const q=$('#mq'); if(q) mSearch(); }
+function viewNew(){
+  return `<div class="sec-h"><h3>Nayi lead</h3></div>
+  <div class="card">
+    <div class="f"><label>Kitni zaroori hai</label>
+      <div class="seg">
+        <button class="${draft.priority==='urgent'?'on u':''}" onclick="setPri('urgent')">Urgent</button>
+        <button class="${draft.priority==='normal'?'on n':''}" onclick="setPri('normal')">Normal</button>
+      </div></div>
+    <div class="g2">
+      <div class="f"><label>Customer name <i>*</i></label><input class="in" id="fName" value="${esc(draft.name||'')}"></div>
+      <div class="f"><label>Budget <i>*</i></label><input class="in mono" id="fBudget" inputmode="numeric" value="${draft.budget||''}"></div>
+    </div>
+    <div class="g2">
+      <div class="f"><label>Number <i>*</i></label><input class="in mono" id="fPhone" inputmode="tel" placeholder="03XXXXXXXXX" value="${esc(draft.phone||'')}"></div>
+      <div class="f"><label>Kis kaam ke liye</label><input class="in" id="fUsage" placeholder="AutoCAD / office / gaming" value="${esc(draft.usage||'')}"></div>
+    </div>
+    <div class="f"><label>Customer ki detail</label><textarea class="in" id="fDetail" placeholder="Kahan se aaya, kya dekha, kya masla hai…">${esc(draft.detail||'')}</textarea></div>
+    ${modelSearchUI(draft.model)}
+    ${specUI()}
+    <div class="g2" style="margin-top:12px">
+      <div class="f"><label>Customer offer <i>*</i></label><input class="in mono" id="fOffer" inputmode="numeric" placeholder="95000" value="${draft.offer||''}"></div>
+      <div class="f"><label>&nbsp;</label><div class="hint" style="margin-top:14px">Farq upar khud ban jata hai.</div></div>
+    </div>
+    <div id="nerr" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="submitLead()">Admin ko bhejein</button>
+      <button class="btn gh" onclick="draft={priority:'normal',ram:8,ssd:256};go('new')">Saaf karein</button></div>
+  </div>`;
+}
+window.setPri=v=>{ keepDraft(); draft.priority=v; render(); };
+window.submitLead=()=>{ try{ _submit(); }catch(e){ console.error(e); toast('Submit error: '+((e&&e.message)||e),'bad'); } };
+function _submit(){
+  keepDraft();
+  const e=$('#nerr'), miss=[];
+  if(!draft.name) miss.push('naam'); if(!draft.phone) miss.push('number');
+  if(!draft.budget) miss.push('budget'); if(!draft.model) miss.push('model');
+  if(!draft.offer) miss.push('customer offer');
+  if(miss.length){ e.textContent='Ye reh gaya: '+miss.join(', ')+'.'; return; }
+  if(!okPhone(draft.phone)){ e.textContent='Number theek likhein — 03XXXXXXXXX.'; return; }
+  const dup=Object.entries(S.leads).find(([id,x])=> isOpenL(x) && digits(x.phone)===digits(draft.phone));
+  if(dup){ e.textContent='Is number ki lead pehle se open hai ('+esc(dup[1].name)+').'; return; }
+  const r=calcRate(draft.model,draft.ram,draft.ssd);
+  if(!r){ e.textContent='Model select karein.'; return; }
+  const offer=Number(draft.offer), now=Date.now();
+  const lead={ name:draft.name, phone:draft.phone, budget:+draft.budget||0, usage:draft.usage||'',
+    detail:draft.detail||'', modelKey:draft.model, model:r.name, ram:draft.ram||8, ssd:draft.ssd||256,
+    list:r.list, floor:r.floor, offer, gap:r.floor-offer,
+    priority:draft.priority||'normal', by:S.me.id, byName:S.me.name,
+    status:'pending', createdAt:now, sentAt:now, updatedAt:now,
+    chat:[{w:S.me.name, sd:'s', t:'Lead bheji — customer '+PKR(offer)+' de raha hai.'+(draft.detail?' '+draft.detail:''), at:now}] };
+  DB.push('leads',lead);
+  draft={priority:'normal',ram:8,ssd:256};
+  toast('Bhej di — jawab isi lead ki chat mein aayega');
+  S.tab='dash'; render(); window.scrollTo(0,0);
+}
+function viewCalc(){
+  return `<div class="sec-h"><h3>Rate calculator</h3></div>
+  <div class="card">
+    ${modelSearchUI(draft.model)}
+    ${specUI()}
+    <div class="f" style="margin-top:12px"><label>Customer offer (farq ke liye)</label>
+      <input class="in mono" id="fOffer" inputmode="numeric" value="${draft.offer||''}"></div>
+    <div class="hint">Yehi rate list admins "Rates" tab se update karte hain.</div>
+  </div>`;
+}
+
+/* ==================================================================
+   13. COD — form, PDF, Yousuf flow, slip
+   ================================================================== */
+let cod={acc:'', dc:'no', dcMode:'', ram:'8', sto:'256'};
+function keepCod(){
+  [['cN','name'],['cP1','p1'],['cP2','p2'],['cCity','city'],['cAddr','addr'],['cModel','model'],
+   ['cGen','gen'],['cProc','proc'],['cAmt','amt'],['cDc','dcAmt'],['cFin','fin']]
+   .forEach(([i,k])=>{ const el=$('#'+i); if(el) cod[k]=el.value; });
+  if($('#cRam2')) cod.ram=$('#cRam2').value;
+  if($('#cSto')) cod.sto=$('#cSto').value;
+  if($('#cAcc')) cod.acc=$('#cAcc').value;
+}
+const codTotal=()=> {
+  const a=Number(cod.amt)||0, d=Number(cod.dcAmt)||0;
+  if(cod.dc==='yes' && cod.dcMode==='add') return Number(cod.fin)||(a+d);
+  return a;
+};
+function wireCodForm(){
+  ['cAmt','cDc','cFin'].forEach(i=>{ const el=$('#'+i); if(el) el.oninput=()=>{ keepCod();
+    if(i!=='cFin' && cod.dc==='yes' && cod.dcMode==='add'){ cod.fin=(Number(cod.amt)||0)+(Number(cod.dcAmt)||0); const f=$('#cFin'); if(f) f.value=cod.fin; }
+    const t=$('#cTot'); if(t) t.textContent=PKR(codTotal()); }; });
+}
+window.setDc=v=>{ keepCod(); cod.dc=v; if(v==='no'){ cod.dcAmt=''; cod.dcMode=''; cod.fin=''; } render(); };
+window.setDcMode=v=>{ keepCod(); cod.dcMode=v;
+  if(v==='add'){ cod.fin=(Number(cod.amt)||0)+(Number(cod.dcAmt)||0); } else cod.fin='';
+  render(); };
+function viewCodNew(){
+  const showDc=cod.dc==='yes';
+  const showMode=showDc && Number(cod.dcAmt)>0;
+  const showFin=showMode && cod.dcMode==='add';
+  return `<div class="row" style="margin:0 0 10px"><button class="btn sm" onclick="go('cod')">← COD list</button></div>
+  <div class="sec-h"><h3>Naya COD order</h3></div>
+  <div class="card">
+    <div class="g2">
+      <div class="f"><label>Name <i>*</i></label><input class="in" id="cN" value="${esc(cod.name||'')}"></div>
+      <div class="f"><label>City <i>*</i></label><input class="in" id="cCity" value="${esc(cod.city||'')}"></div>
+    </div>
+    <div class="g2">
+      <div class="f"><label>Phone number 1 <i>*</i></label><input class="in mono" id="cP1" inputmode="tel" placeholder="03XXXXXXXXX" value="${esc(cod.p1||'')}"></div>
+      <div class="f"><label>Phone number 2</label><input class="in mono" id="cP2" inputmode="tel" value="${esc(cod.p2||'')}"></div>
+    </div>
+    <div class="f"><label>Complete address <i>*</i></label><textarea class="in" id="cAddr">${esc(cod.addr||'')}</textarea></div>
+    <div class="g2">
+      <div class="f"><label>Laptop model <i>*</i></label><input class="in" id="cModel" placeholder="Dell Latitude 5420" value="${esc(cod.model||'')}"></div>
+      <div class="f"><label>Generation</label><input class="in" id="cGen" placeholder="11th" value="${esc(cod.gen||'')}"></div>
+    </div>
+    <div class="g2">
+      <div class="f"><label>Processor</label><input class="in" id="cProc" placeholder="Core i5" value="${esc(cod.proc||'')}"></div>
+      <div class="f"><label>Accessories</label><select class="in" id="cAcc">
+        ${['','Bag','Mouse','Bag + Mouse'].map(a=>`<option value="${a}" ${cod.acc===a?'selected':''}>${a||'—'}</option>`).join('')}</select></div>
+    </div>
+    <div class="g2">
+      <div class="f"><label>RAM</label><select class="in" id="cRam2">${[4,8,16,32].map(r=>`<option ${String(cod.ram)===String(r)?'selected':''}>${r}</option>`).join('')}</select></div>
+      <div class="f"><label>Storage (GB)</label><select class="in" id="cSto">${[128,256,512,1024].map(s=>`<option ${String(cod.sto)===String(s)?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="f"><label>COD amount <i>*</i></label><input class="in mono" id="cAmt" inputmode="numeric" value="${cod.amt||''}"></div>
+    <div class="f"><label>Delivery charges?</label>
+      <div class="seg">
+        <button class="${cod.dc==='yes'?'on':''}" onclick="setDc('yes')">Yes</button>
+        <button class="${cod.dc==='no'?'on':''}" onclick="setDc('no')">No</button>
+      </div></div>
+    ${showDc?`<div class="f"><label>Delivery charges amount</label><input class="in mono" id="cDc" inputmode="numeric" value="${cod.dcAmt||''}"></div>`:''}
+    ${showMode?`<div class="f"><label>Delivery charges COD amount mein add hongi ya customer alag dega?</label>
+      <div class="seg">
+        <button class="${cod.dcMode==='add'?'on':''}" onclick="setDcMode('add')">COD mein add</button>
+        <button class="${cod.dcMode==='sep'?'on':''}" onclick="setDcMode('sep')">Alag se pay karega</button>
+      </div></div>`:''}
+    ${showFin?`<div class="f"><label>Naya COD amount (edit ho sakta hai)</label>
+      <input class="in mono fin-red" id="cFin" inputmode="numeric" value="${cod.fin||''}"></div>`:''}
+    <div class="kv" style="margin-top:4px"><i>Total — customer se wasool</i><b class="mono fin-red" id="cTot" style="font-size:18px">${PKR(codTotal())}</b></div>
+    <div id="cerr" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="codConfirm()">Submit</button>
+      <button class="btn gh" onclick="cod={acc:'',dc:'no',dcMode:'',ram:'8',sto:'256'};render()">Saaf karein</button></div>
+  </div>`;
+}
+window.codConfirm=()=>{
+  keepCod();
+  const e=$('#cerr'), miss=[];
+  if(!cod.name) miss.push('name'); if(!cod.p1) miss.push('phone 1');
+  if(!cod.city) miss.push('city'); if(!cod.addr) miss.push('address');
+  if(!cod.model) miss.push('model'); if(!(Number(cod.amt)>0)) miss.push('COD amount');
+  if(miss.length){ e.textContent='Ye reh gaya: '+miss.join(', ')+'.'; return; }
+  if(!okPhone(cod.p1)){ e.textContent='Phone 1 theek likhein — 03XXXXXXXXX.'; return; }
+  sheet(`<h3>Ye amount final hai?</h3>
+    <div class="kv"><i>Customer se wasool hoga</i><b class="mono fin-red" style="font-size:22px">${PKR(codTotal())}</b></div>
+    <div class="hint" style="margin:8px 0 12px">${cod.dc==='yes' ? (cod.dcMode==='add'?'Delivery charges COD mein shamil hain.':'Delivery charges ('+PKR(Number(cod.dcAmt)||0)+') customer alag dega.') : 'Delivery charges nahi hain.'}</div>
+    <div class="row"><button class="btn ok wide" onclick="codSave()">Confirm — PDF banao</button>
+      <button class="btn gh" onclick="closeSheet()">Wapis</button></div>`);
+};
+window.codSave=()=>{
+  const now=Date.now();
+  const rec={ name:cod.name, p1:cod.p1, p2:cod.p2||'', city:cod.city, addr:cod.addr,
+    model:cod.model, gen:cod.gen||'', proc:cod.proc||'', ram:cod.ram, sto:cod.sto, acc:cod.acc||'',
+    amt:+cod.amt||0, dc:cod.dc==='yes'?(+cod.dcAmt||0):0, dcMode:cod.dc==='yes'?(cod.dcMode||'sep'):'none',
+    total:codTotal(), by:S.me.id, byName:S.me.name, status:'ready', createdAt:now, updatedAt:now };
+  const id=DB.push('cods',rec);
+  cod={acc:'',dc:'no',dcMode:'',ram:'8',sto:'256'};
+  closeSheet();
+  sheet(`<h3>PDF tayyar hai</h3>
+    <div class="hint" style="margin-bottom:12px">Pehle PDF check kar lein, phir YOUSUF ko bhejein.</div>
+    <div class="row"><button class="btn wide" onclick="pdfCod('${id}')">📄 PDF dekhein / download</button></div>
+    <div class="row"><button class="btn p wide" onclick="sendCod('${id}')">📤 Send to YOUSUF</button>
+      <button class="btn gh" onclick="closeSheet();go('cod')">Baad mein</button></div>`);
+};
+window.sendCod=id=>{
+  DB.update('cods/'+id,{status:'sent', sentAt:Date.now(), updatedAt:Date.now()});
+  closeSheet(); S.tab='cod'; render(); toast('YOUSUF ko bhej di — 30 min ka timer shuru');
+};
+function codChip(c){
+  return {ready:['c-blu','Send baqi'],sent:['c-red','Yousuf reply?'],accepted:['c-amb','Slip ka intezar'],
+    slipped:['c-grn','Slip aa gayi'],done:['c-grn','COMPLETE']}[c.status]||['c-gry',c.status];
+}
+function codCard(c){
+  const adm=isAdm(S.me.role), ch=codChip(c);
+  let sub=esc(c.city)+' · '+esc(c.model);
+  if(adm) sub+=' · '+esc(c.byName||'');
+  let extra='';
+  if(c.status==='sent') extra=`<span class="chip c-red">${ago(c.sentAt)} se</span>`;
+  if(c.status==='accepted'){ const end=(c.acceptedAt||0)+(Number(c.hrs)||0)*HOUR, left=end-S.now;
+    extra=`<span class="chip ${left>0?'c-amb':'c-red'}">${left>0?Math.floor(left/HOUR)+'h '+Math.floor((left%HOUR)/MIN)+'m':'late'}</span>`; }
+  if(c.status==='done') extra='<span class="chip c-grn">Nice job 💪</span>';
+  return `<div class="cc ${c.status==='sent'?'r':c.status==='accepted'?'a':c.status==='ready'?'b':'g'}" onclick="openCod('${c.id}')">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(c.name)}</div><div class="sub">${sub}</div></div>
+    <div class="end">${extra}<span class="chip ${ch[0]}">${ch[1]}</span>
+      <b class="mono" style="font-size:13px;color:var(--red-tx)">${PKR(c.total)}</b></div></div></div>`;
+}
+function viewCod(){
+  const adm=isAdm(S.me.role), all=myCods();
+  const ready=all.filter(c=>c.status==='ready' && c.by===S.me.id);
+  const sent=all.filter(c=>c.status==='sent');
+  const acc=all.filter(c=>c.status==='accepted');
+  const comp=all.filter(c=>c.status==='slipped'||c.status==='done');
+  return (adm?'':`<div class="row" style="margin-bottom:12px"><button class="btn p wide" onclick="go('codnew')">+ Naya COD order</button></div>`)
+    + (adm?'':codAlertsS())
+    + grp2(ready,'Send baqi — YOUSUF ko bhejein')
+    + grp2(sent, adm?'Nayi COD — jawab dein':'YOUSUF ke jawab ka intezar')
+    + grp2(acc, adm?'Slip bhejni hai':'Dispatch — slip ka intezar')
+    + dropGrp('codc','Complete COD',comp,comp.map(codCard).join(''))
+    + (all.length?'':empty('Koi COD nahi', adm?'Salesperson bhejega to yahan red aayegi.':'"+ Naya COD order" se shuru karein.'));
+}
+function grp2(list,title){ if(!list.length) return '';
+  return `<div class="sec-h"><h3>${title}</h3><span class="ct">${list.length}</span></div>`+list.map(codCard).join(''); }
+function fsCod(){
+  const c0=S.cods[S.codFull]; if(!c0) return '';
+  if(!isAdm(S.me.role) && c0.by!==S.me.id) return '';
+  const c={id:S.codFull,...c0};
+  const adm=isAdm(S.me.role), ch=codChip(c);
+  let statusBox='';
+  if(c.status==='sent'){
+    const w=Math.floor((S.now-(c.sentAt||0))/MIN);
+    statusBox = adm
+      ? `<div class="alert red">🧾 Nayi COD — PDF parh kar jawab dein (Aaj/Kal + kitne ghante mein slip).</div>`
+      : (w<30
+        ? `<div class="alert red">⏳ YOUSUF ke jawab ka intezar — <span class="tmr">${30-w} min</span> baqi.</div>`
+        : `<div class="alert red big pulse">📞 CALL YOUSUF TO REPLY COD${S.cfg.yousufPhone?'':' — number Team settings mein set hoga'}</div>`
+          + (S.cfg.yousufPhone?`<div class="row" style="margin-bottom:10px"><a class="btn dgr wide" href="tel:${esc(S.cfg.yousufPhone)}">📞 Call YOUSUF</a></div>`:''));
+  }
+  if(c.status==='accepted'){
+    const end=(c.acceptedAt||0)+(Number(c.hrs)||0)*HOUR, left=end-S.now;
+    statusBox=`<div class="alert ${left>0?'org':'red'}">🚚 Dispatch: <b>${esc(c.day||'')}</b> · slip ka intezar · <span class="tmr">${left>0?Math.floor(left/HOUR)+'h '+Math.floor((left%HOUR)/MIN)+'m baqi':'waqt guzar gaya'}</span></div>`;
+  }
+  if(c.status==='slipped') statusBox=`<div class="alert grn">📄 Dispatch slip aa gayi — neeche dekhein aur download karein.</div>`;
+  if(c.status==='done') statusBox=`<div class="alert grn big">🟢 COD COMPLETE — Nice job! 💪 Slip customer ko bhej dein.</div>`;
+  return `<div class="fs"><div class="fhead">
+      <button class="xbig" onclick="closeCod()">✕</button>
+      <div style="min-width:0"><div class="nm">${esc(c.name)}</div><div class="ph">${esc(c.p1)}${c.p2?' · '+esc(c.p2):''}</div></div>
+      <div style="margin-left:auto"><span class="chip ${ch[0]}">${ch[1]}</span></div>
+    </div>
+    <div class="inner">
+      ${statusBox}
+      <div class="card"><div class="kvg">
+        <div class="kv"><i>City</i><b>${esc(c.city)}</b></div>
+        <div class="kv"><i>Salesperson</i><b>${esc(c.byName||'')}</b></div>
+        <div class="kv" style="grid-column:1/-1"><i>Complete address</i><b>${esc(c.addr)}</b></div>
+        <div class="kv"><i>Model</i><b>${esc(c.model)}</b></div>
+        <div class="kv"><i>Generation / Proc</i><b>${esc(c.gen||'—')} · ${esc(c.proc||'—')}</b></div>
+        <div class="kv"><i>RAM / Storage</i><b>${esc(c.ram)}GB / ${c.sto>=1024?(c.sto/1024)+'TB':c.sto+'GB'}</b></div>
+        <div class="kv"><i>Accessories</i><b>${esc(c.acc||'—')}</b></div>
+        <div class="kv"><i>COD amount</i><b class="mono">${PKR(c.amt)}</b></div>
+        <div class="kv"><i>Delivery charges</i><b class="mono">${c.dcMode==='none'?'—':PKR(c.dc)+(c.dcMode==='add'?' (COD mein)':' (alag)')}</b></div>
+        <div class="kv" style="grid-column:1/-1;background:var(--red-bg);border-color:#F5C6C8"><i>Total — customer se wasool</i><b class="mono" style="font-size:19px;color:var(--red-tx)">${PKR(c.total)}</b></div>
+      </div></div>
+      <div class="card"><div class="row" style="margin-top:0">
+        <button class="btn wide" onclick="pdfCod('${c.id}')">📄 PDF</button>
+        ${adm && c.status==='sent' ? `<button class="btn p wide" onclick="ansCodSheet('${c.id}')">Jawab dein</button>`:''}
+        ${adm && c.status==='accepted' ? `<button class="btn ok wide" onclick="slipSheet('${c.id}')">📤 Slip lagayein</button>`:''}
+        ${(c.status==='slipped'||c.status==='done') ? `<button class="btn ok wide" onclick="viewSlip('${c.id}')">Slip dekhein</button>`:''}
+        ${!adm && c.status==='ready' ? `<button class="btn p wide" onclick="sendCod('${c.id}')">📤 Send to YOUSUF</button>`:''}
+        ${!adm && c.status==='done' ? `<a class="btn ok wide" target="_blank" href="${waL(c.p1,'Assalam o alaikum '+c.name+' — Denzen Computers. Aapka order dispatch ho gaya hai, slip bhej raha hoon.')}">Customer ko WhatsApp</a>`:''}
+      </div>
+      <div class="row"><a class="btn sm" href="tel:${esc(c.p1)}">📞 Call</a>
+        <button class="btn dgr sm" onclick="delCod('${c.id}')">🗑 Delete</button></div>
+      </div>
+    </div></div>`;
+}
+window.delCod=id=>{ if(!confirm('Pakka permanent delete?')) return;
+  DB.set('cods/'+id,null); DB.set('codslip/'+id,null); S.codFull=null; render(); toast('Delete ho gayi'); };
+window.ansCodSheet=id=>{
+  sheet(`<h3>COD ka jawab</h3>
+    <div class="f"><label>Dispatch kab hoga</label>
+      <div class="seg" id="daySeg">
+        <button onclick="pickDay(this,'AAJ')">Today (Aaj)</button>
+        <button onclick="pickDay(this,'KAL')">Tomorrow (Kal)</button>
+      </div></div>
+    <div class="f"><label>Kitne ghanton mein dispatch slip de denge <i>*</i></label>
+      <input class="in mono" id="cHrs" inputmode="numeric" placeholder="4"></div>
+    <div class="hint" style="margin-bottom:10px">Salesperson ke paas inhi ghanton ka ulta timer chalega.</div>
+    <div id="cderr" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="saveAnsCod('${id}')">Bhejein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+let daySel='';
+window.pickDay=(btn,v)=>{ daySel=v;
+  document.querySelectorAll('#daySeg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); };
+window.saveAnsCod=id=>{
+  const h=Number(($('#cHrs')||{}).value)||0;
+  if(!daySel){ $('#cderr').textContent='Aaj ya Kal select karein.'; return; }
+  if(!(h>0)){ $('#cderr').textContent='Ghante likhein.'; return; }
+  DB.update('cods/'+id,{status:'accepted', day:daySel, hrs:h, acceptedAt:Date.now(), updatedAt:Date.now()});
+  daySel=''; closeSheet(); toast('Jawab chala gaya — salesperson ka timer shuru');
+};
+window.slipSheet=id=>{
+  sheet(`<h3>Dispatch slip lagayein</h3>
+    <div class="f"><label>Slip ki photo</label>
+      <input type="file" class="in" id="slipF" accept="image/*"></div>
+    <div class="row"><button class="btn ok wide" onclick="slipGo('${id}')">Bhejein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onerror=()=>rej(new Error('File parh nahi saki'));
+    r.onload=()=>{ const img=new Image();
+      img.onerror=()=>rej(new Error('Image kharab hai'));
+      img.onload=()=>{ const mx=1400, sc=Math.min(1,mx/Math.max(img.width,img.height));
+        const cv=document.createElement('canvas'); cv.width=img.width*sc; cv.height=img.height*sc;
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        res({n:file.name, d:cv.toDataURL('image/jpeg',0.72)}); };
+      img.src=r.result; };
+    r.readAsDataURL(file);
+  });
+}
+window.slipGo=async id=>{
+  const f=($('#slipF')||{}).files; if(!f||!f.length){ toast('Photo select karein','bad'); return; }
+  try{
+    const im=await shrink(f[0]);
+    await DB.set('codslip/'+id, im);
+    DB.update('cods/'+id,{status:'slipped', slippedAt:Date.now(), updatedAt:Date.now()});
+    closeSheet(); toast('Slip bhej di — Complete COD mein chali gayi');
+  }catch(err){ toast(err.message||'Slip upload fail','bad'); }
+};
+window.viewSlip=id=>{
+  DB.get('codslip/'+id).then(m=>{
+    if(!m||!m.d){ toast('Slip nahi mili','bad'); return; }
+    const d=document.createElement('div'); d.className='modal'; d.style.alignItems='center';
+    d.innerHTML=`<div style="text-align:center">
+      <img class="zoom" src="${m.d}">
+      <div class="row" style="justify-content:center;margin-top:12px">
+        <a class="btn ok" download="slip-${id}.jpg" href="${m.d}" onclick="slipSaved('${id}')">⬇ Download / Save</a>
+        <button class="btn gh" onclick="closeSheet()" style="color:#fff">Band karein</button>
+      </div></div>`;
+    d.onclick=ev=>{ if(ev.target===d) d.remove(); };
+    document.body.appendChild(d);
+  });
+};
+window.slipSaved=id=>{
+  const c=S.cods[id];
+  if(c && S.me.role==='sales' && c.by===S.me.id && c.status==='slipped'){
+    DB.update('cods/'+id,{status:'done', doneAt:Date.now(), updatedAt:Date.now()});
+    setTimeout(()=>{ closeSheet(); render();
+      toast('💾 Save ho gayi — ab customer ko bhej dein'); },300);
+  }
+};
+window.pdfCod=id=>{
+  const c=S.cods[id]; if(!c){ toast('COD nahi mili','bad'); return; }
+  if(!window.jspdf || !window.jspdf.jsPDF){ toast('PDF ke liye internet chahiye (CDN load nahi hui)','bad'); return; }
+  const {jsPDF}=window.jspdf; const doc=new jsPDF();
+  const rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
+  // header band
+  doc.setFillColor(23,35,60); doc.rect(0,0,210,34,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('DENZEN COMPUTERS',14,15);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('Premium Business & Professional Laptops',14,21.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.text('CASH ON DELIVERY',196,14,{align:'right'});
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('ORDER SLIP',196,20,{align:'right'});
+  // shop line
+  doc.setTextColor(90,105,130); doc.setFontSize(8.5);
+  doc.text('FF-06, First Floor, Lavish Mall, Tariq Road, Karachi  ·  WhatsApp +92 325 1548556  ·  denzencomputers.com',105,41,{align:'center'});
+  doc.setDrawColor(228,233,242); doc.line(12,45,198,45);
+  // meta
+  doc.setTextColor(20,30,51); doc.setFontSize(9.5);
+  doc.setFont('helvetica','bold'); doc.text('COD No:',14,53);
+  doc.setFont('helvetica','normal'); doc.text(String(id).slice(-6).toUpperCase(),33,53);
+  doc.setFont('helvetica','bold'); doc.text('Date:',80,53);
+  doc.setFont('helvetica','normal'); doc.text(stamp(c.createdAt||Date.now()),93,53);
+  doc.setFont('helvetica','bold'); doc.text('Salesperson:',140,53);
+  doc.setFont('helvetica','normal'); doc.text(String(c.byName||''),165,53);
+  // customer box
+  const addr=doc.splitTextToSize(String(c.addr||''),120);
+  const chS=60, chH=30+addr.length*5;
+  doc.setDrawColor(228,233,242); doc.setFillColor(247,249,253);
+  doc.roundedRect(12,chS,186,chH,2,2,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(36,86,230);
+  doc.text('CUSTOMER',16,chS+7);
+  doc.setTextColor(20,30,51); doc.setFontSize(10);
+  doc.text('Name:',16,chS+15); doc.setFont('helvetica','normal'); doc.text(String(c.name||''),35,chS+15);
+  doc.setFont('helvetica','bold'); doc.text('Phone 1:',110,chS+15); doc.setFont('helvetica','normal'); doc.text(String(c.p1||''),130,chS+15);
+  doc.setFont('helvetica','bold'); doc.text('City:',16,chS+22); doc.setFont('helvetica','normal'); doc.text(String(c.city||''),35,chS+22);
+  doc.setFont('helvetica','bold'); doc.text('Phone 2:',110,chS+22); doc.setFont('helvetica','normal'); doc.text(String(c.p2||'—'),130,chS+22);
+  doc.setFont('helvetica','bold'); doc.text('Address:',16,chS+29); doc.setFont('helvetica','normal'); doc.text(addr,35,chS+29);
+  // laptop box
+  const lhS=chS+chH+6, lhH=32;
+  doc.setFillColor(247,249,253); doc.roundedRect(12,lhS,186,lhH,2,2,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(36,86,230);
+  doc.text('LAPTOP',16,lhS+7);
+  doc.setTextColor(20,30,51); doc.setFontSize(10);
+  doc.setFont('helvetica','bold'); doc.text('Model:',16,lhS+15); doc.setFont('helvetica','normal'); doc.text(String(c.model||''),35,lhS+15);
+  doc.setFont('helvetica','bold'); doc.text('Generation:',110,lhS+15); doc.setFont('helvetica','normal'); doc.text(String(c.gen||'—'),135,lhS+15);
+  doc.setFont('helvetica','bold'); doc.text('Processor:',16,lhS+22); doc.setFont('helvetica','normal'); doc.text(String(c.proc||'—'),40,lhS+22);
+  doc.setFont('helvetica','bold'); doc.text('RAM / Storage:',110,lhS+22); doc.setFont('helvetica','normal');
+  doc.text(String(c.ram)+'GB / '+(c.sto>=1024?(c.sto/1024)+'TB':c.sto+'GB'),142,lhS+22);
+  doc.setFont('helvetica','bold'); doc.text('Accessories:',16,lhS+29); doc.setFont('helvetica','normal'); doc.text(String(c.acc||'—'),44,lhS+29);
+  // amount box
+  const ahS=lhS+lhH+6;
+  doc.setDrawColor(197,53,56); doc.setFillColor(253,232,232);
+  doc.roundedRect(110,ahS,88,34,2,2,'FD');
+  doc.setTextColor(20,30,51); doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('COD amount',114,ahS+8); doc.text(rs(c.amt),194,ahS+8,{align:'right'});
+  doc.text('Delivery charges',114,ahS+15);
+  doc.text(c.dcMode==='none'?'—':rs(c.dc)+(c.dcMode==='add'?' (incl.)':' (alag)'),194,ahS+15,{align:'right'});
+  doc.setDrawColor(197,53,56); doc.line(114,ahS+19,194,ahS+19);
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(192,53,56);
+  doc.text('TOTAL COD',114,ahS+28); doc.setFontSize(15); doc.text(rs(c.total),194,ahS+28,{align:'right'});
+  doc.setTextColor(90,105,130); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+  doc.text(doc.splitTextToSize('Payment sirf delivery par. Rider ke samne parcel check karein. Kisi bhi masle par upar diye gaye WhatsApp number par rabta karein.',90),12,ahS+8);
+  // footer
+  doc.setDrawColor(228,233,242); doc.line(12,282,198,282);
+  doc.setFontSize(8); doc.text('Deal Desk — Denzen Computers · generated '+stamp(Date.now()),105,288,{align:'center'});
+  doc.save('COD-'+String(c.name||'order').replace(/[^a-z0-9]/gi,'_')+'-'+String(id).slice(-5)+'.pdf');
+};
+
+/* ==================================================================
+   14. DEMANDS — reject = permanent delete
+   ================================================================== */
+function viewReqs(){
+  const adm=isAdm(S.me.role), list=myReqs();
+  const open=list.filter(r=>r.status==='open'), ans=list.filter(r=>r.status==='answered');
+  return (adm?'':`<div class="row" style="margin-bottom:12px"><button class="btn p wide" onclick="newReq()">+ Urgent requirement</button></div>`)
+    + (open.length?`<div class="sec-h"><h3>${adm?'Approval chahiye':'Admin ke paas pending'}</h3><span class="ct">${open.length}</span></div>`+open.map(reqCard).join(''):'')
+    + (ans.length?`<div class="sec-h"><h3>${adm?'Jawab diya hua':'Jawab aa gaya'}</h3><span class="ct">${ans.length}</span></div>`+ans.map(reqCard).join(''):'')
+    + (list.length?'':empty('Koi demand nahi', adm?'Salesperson bhejega to yahan aayegi.':'Customer aisi cheez maange jo stock mein nahi — yahan se bhejein.'));
+}
+function reqCard(r){
+  const adm=isAdm(S.me.role);
+  const who=(S.staff[r.by]||{}).name||'—';
+  return `<div class="cc ${r.status==='open'?(adm?'r':'a'):'g'}" style="cursor:default">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(r.custName||'Customer')}</div>
+      <div class="sub">${esc(r.phone||'')}${adm?' · '+esc(who):''} · ${ago(r.createdAt)} pehle · budget ${PKR(r.budget)}</div></div>
+      <div class="end"><span class="chip ${r.status==='open'?'c-red':'c-grn'}">${r.status==='open'?'Pending':'Jawab mil gaya'}</span></div></div>
+    <div class="note"><div class="lbl">Requirement</div>${esc(r.need)}</div>
+    ${r.reply?`<div class="note hl"><div class="lbl">Admin ka jawab</div>${esc(r.reply)}</div>`:''}
+    <div class="row">
+      ${adm&&r.status==='open'?`<button class="btn ok sm" onclick="ansReq('${r.id}')">Approve + jawab</button>
+        <button class="btn dgr sm" onclick="rejReq('${r.id}')">Reject → delete</button>`:''}
+      ${adm&&r.status==='answered'?`<button class="btn sm" onclick="ansReq('${r.id}')">Jawab badlein</button>
+        <button class="btn dgr sm" onclick="delReq('${r.id}')">🗑 Delete</button>`:''}
+      ${!adm?`<button class="btn dgr sm" onclick="delReq('${r.id}')">🗑 Delete</button>`:''}
+    </div></div>`;
+}
+window.newReq=()=> sheet(`<h3>Urgent requirement</h3>
+  <div class="g2"><div class="f"><label>Customer <i>*</i></label><input class="in" id="qN"></div>
+    <div class="f"><label>Phone</label><input class="in mono" id="qP" inputmode="tel"></div></div>
+  <div class="f"><label>Budget</label><input class="in mono" id="qB" inputmode="numeric"></div>
+  <div class="f"><label>Kya chahiye — poori detail <i>*</i></label>
+    <textarea class="in" id="qT" placeholder="8GB graphic card wala laptop, 200k tak. Hamare paas nahi — kya de sakte hain?"></textarea></div>
+  <div class="row"><button class="btn p wide" onclick="saveReq()">Bhejein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.saveReq=()=>{
+  const n=$('#qN').value.trim(), t=$('#qT').value.trim();
+  if(!n||!t){ toast('Naam aur requirement likhein','bad'); return; }
+  DB.push('reqs',{custName:n, phone:$('#qP').value, budget:+$('#qB').value||0, need:t,
+    by:S.me.id, status:'open', createdAt:Date.now()});
+  closeSheet(); toast('Admin ko bhej di');
+};
+window.ansReq=id=> sheet(`<h3>Approve + jawab</h3>
+  <div class="note" style="margin-bottom:12px"><div class="lbl">Requirement</div>${esc(S.reqs[id].need)}</div>
+  <div class="f"><label>Kya available hai <i>*</i></label>
+    <textarea class="in" id="aR" placeholder="Dell Precision 7550 — RTX 4000 8GB, 16/512, 235k.">${esc(S.reqs[id].reply||'')}</textarea></div>
+  <div class="row"><button class="btn ok wide" onclick="saveAnsReq('${id}')">Bhejein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.saveAnsReq=id=>{
+  const t=$('#aR').value.trim(); if(!t){ toast('Jawab likhein','bad'); return; }
+  DB.update('reqs/'+id,{reply:t, status:'answered', answeredAt:Date.now()});
+  closeSheet(); toast('Jawab bhej diya');
+};
+window.rejReq=id=>{ if(!confirm('Reject = permanent delete. Pakka?')) return;
+  DB.set('reqs/'+id,null); toast('Reject — delete ho gayi'); };
+window.delReq=id=>{ if(!confirm('Pakka permanent delete?')) return;
+  DB.set('reqs/'+id,null); toast('Delete ho gayi'); };
+
+/* ==================================================================
+   15. RATES (admins) — search ke sath
+   ================================================================== */
+window.onQ=v=>{ S.q=v; const b=$('#rBody'); if(b) b.innerHTML=rateRows(); };
+function rateRows(){
+  const q=(S.q||'').toLowerCase();
+  return Object.entries(S.models).filter(([k,m])=>!q||(m.name||'').toLowerCase().includes(q))
+    .map(([k,m])=>`<tr><td>${esc(m.name)}</td>
+      <td class="n">${PKR(m.base)}</td>
+      <td class="n" style="color:var(--gold-tx)">${PKR(m.sellMin)}</td>
+      <td><button class="btn sm gh" onclick="editModel('${k}')">Edit</button></td></tr>`).join('')
+    || '<tr><td colspan="4" class="hint" style="padding:12px">Koi model nahi mila.</td></tr>';
+}
+function viewRates(){
+  return `<div class="sec-h"><h3>Rate list</h3><span class="ct">${Object.keys(S.models).length} model</span></div>
+  <div class="card">
+    <input class="in" placeholder="Model search karein… (5420, EliteBook, T14)" value="${esc(S.q||'')}" oninput="onQ(this.value)">
+    <table class="tbl" style="margin-top:10px"><thead><tr><th>Model</th><th style="text-align:right">List</th><th style="text-align:right">Least</th><th></th></tr></thead>
+    <tbody id="rBody">${rateRows()}</tbody></table>
+    <div class="row"><button class="btn p" onclick="editModel(null)">+ Naya model</button>
+      ${LIVE?'<button class="btn" onclick="importModels()">Sales Tracker se import</button>':''}</div>
+  </div>
+  <div class="sec-h"><h3>Spec ka farq</h3></div>
+  <div class="card"><table class="tbl"><tbody>
+    ${Object.entries(RAM_D).map(([r,v])=>`<tr><td>RAM ${r} GB</td><td class="n">${v>0?'+':''}${PKR(v)}</td></tr>`).join('')}
+    ${Object.entries(SSD_D).map(([s,v])=>`<tr><td>SSD ${s>=1024?(s/1024)+' TB':s+' GB'}</td><td class="n">${v>0?'+':''}${PKR(v)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+window.editModel=k=>{
+  const m=k?S.models[k]:{name:'',base:'',sellMin:''};
+  sheet(`<h3>${k?'Model edit':'Naya model'}</h3>
+    <div class="f"><label>Naam <i>*</i></label><input class="in" id="mN" value="${esc(m.name)}"></div>
+    <div class="f"><label>List rate</label><input class="in mono" id="mB" inputmode="numeric" value="${m.base||''}"></div>
+    <div class="f"><label>Least — salesperson ko yahi dikhta hai</label><input class="in mono" id="mS" inputmode="numeric" value="${m.sellMin||''}"></div>
+    <div class="row"><button class="btn p wide" onclick="saveModel('${k||''}')">Save</button>
+      ${k?`<button class="btn dgr sm" onclick="delModel('${k}')">Delete</button>`:''}
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.saveModel=k=>{
+  const n=$('#mN').value.trim(); if(!n){ toast('Naam likhein','bad'); return; }
+  const o={name:n, base:+$('#mB').value||0, sellMin:+$('#mS').value||0};
+  if(k) DB.update('models/'+k,o); else DB.push('models',o);
+  closeSheet(); toast('Save ho gaya');
+};
+window.delModel=k=>{ if(!confirm('Model delete?')) return; DB.set('models/'+k,null); closeSheet(); toast('Hata diya'); };
+window.importModels=async ()=>{
+  const v=await DB.raw(MODELS_MIRROR);
+  const out={};
+  Object.entries(SEED_MODELS).forEach(([k,m])=>{ out[k]={...m}; });
+  Object.entries(S.models).forEach(([k,m])=>{ if(!out[k]) out[k]=m; });
+  let upd=0;
+  if(v){
+    Object.entries(v).forEach(([k,p])=>{
+      if(k==='_customModels'||!p||!out[k]) return;
+      if(p.avgPrice) out[k].base=+p.avgPrice;
+      if(p.leastPrice) out[k].sellMin=+p.leastPrice;
+      upd++;
+    });
+    Object.values(v._customModels||{}).forEach(m=>{
+      if(!m||!m.model) return;
+      const k=(m.brand+'_'+m.model+'_'+m.processor+'_'+(m.generation||'')).replace(/[^a-zA-Z0-9]/g,'_');
+      const p=v[k]||{};
+      out[k]={ name:(m.brand+' '+m.model+' '+m.processor+(m.generation?' '+m.generation:'')+(m.gpu?' ('+String(m.gpu).toUpperCase()+')':'')),
+        brand:m.brand||'', model:m.model||'', proc:m.processor||'', gen:m.generation||'', gpu:m.gpu||'',
+        base:+(p.avgPrice||m.avgPrice)||0, sellMin:+(p.leastPrice||m.leastPrice)||0 };
+      upd++;
+    });
+  }
+  DB.set('models',out);
+  toast(Object.keys(out).length+' model sync — '+(v?upd+' rate Sales Tracker se aaye':'built-in rates lag gaye'));
+};
+
+/* ==================================================================
+   16. REPORT (admins)
+   ================================================================== */
+function viewReport(){
+  const all=myLeads();
+  if(!all.length) return empty('Report ke liye abhi data nahi');
+  const won=all.filter(l=>l.status==='won'), lost=all.filter(l=>l.status==='lost');
+  const closed=won.length+lost.length, conv=closed?Math.round(won.length/closed*100):0;
+  const ansd=all.filter(l=>l.ansAt&&l.sentAt);
+  const avgResp=ansd.length?Math.round(ansd.reduce((s,l)=>s+(l.ansAt-l.sentAt),0)/ansd.length/MIN):null;
+  const why={}; lost.forEach(l=>why[l.lostReason||'—']=(why[l.lostReason||'—']||0)+1);
+  const per={}; all.forEach(l=>{ const n=(S.staff[l.by]||{}).name||l.byName||'—';
+    per[n]=per[n]||{t:0,w:0,l:0}; per[n].t++;
+    if(l.status==='won') per[n].w++; if(l.status==='lost') per[n].l++; });
+  const codDone=myCods().filter(c=>c.status==='done').length;
+  return `<div class="master" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="grn"><div class="n">${conv}%</div><div class="l">Band mein se purchase</div></div>
+      <div class="amb"><div class="n">${avgResp==null?'—':avgResp+'m'}</div><div class="l">Ausat jawab time</div></div>
+      <div class="blu"><div class="n">${codDone}</div><div class="l">COD complete</div></div>
+    </div>
+    <div class="card"><div class="kvg">
+      <div class="kv"><i>Kul leads</i><b class="mono">${all.length}</b></div>
+      <div class="kv"><i>Purchase</i><b class="mono" style="color:var(--grn-tx)">${won.length}</b></div>
+      <div class="kv"><i>Lost</i><b class="mono" style="color:var(--red-tx)">${lost.length}</b></div>
+      <div class="kv"><i>Open</i><b class="mono">${all.filter(isOpenL).length}</b></div>
+    </div></div>
+    <div class="sec-h"><h3>Salesperson</h3></div>
+    <div class="card"><table class="tbl"><thead><tr><th>Naam</th><th style="text-align:right">Leads</th><th style="text-align:right">Purchase</th><th style="text-align:right">Lost</th></tr></thead>
+      <tbody>${Object.entries(per).sort((a,b)=>b[1].w-a[1].w).map(([n,v])=>`<tr><td>${esc(n)}</td><td class="n">${v.t}</td><td class="n" style="color:var(--grn-tx)">${v.w}</td><td class="n" style="color:var(--red-tx)">${v.l}</td></tr>`).join('')}</tbody></table></div>
+    ${Object.keys(why).length?`<div class="sec-h"><h3>Lost kyun hui</h3></div>
+    <div class="card"><table class="tbl"><tbody>${Object.entries(why).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<tr><td>${esc(w)}</td><td class="n">${c}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+}
+
+/* ==================================================================
+   17. TEAM + SETTINGS (sirf BILAL)
+   ================================================================== */
+function viewTeam(){
+  if(S.me.role!=='boss') return empty('Ye section sirf BILAL ke liye hai');
+  return `<div class="sec-h"><h3>Team</h3><span class="ct">${Object.keys(S.staff).length}</span></div>
+  <div class="card"><table class="tbl"><thead><tr><th>Naam</th><th>Role</th><th>PIN</th><th></th></tr></thead>
+    <tbody>${Object.entries(S.staff).map(([k,s])=>`<tr><td>${esc(s.name)} ${s.prot?'🔒':''}</td>
+      <td>${isAdm(s.role)?'Admin':'Salesperson'}</td><td class="mono">${esc(s.pin)}</td>
+      <td><button class="btn sm gh" onclick="editStaff('${k}')">Edit</button></td></tr>`).join('')}</tbody></table>
+    <div class="row"><button class="btn p" onclick="editStaff(null)">+ Naya salesperson</button></div></div>
+
+  <div class="sec-h"><h3>Settings</h3></div>
+  <div class="card">
+    <div class="g2">
+      <div class="f"><label>YOUSUF ka phone (Call button ke liye)</label>
+        <input class="in mono" id="sYp" value="${esc(S.cfg.yousufPhone||'')}" placeholder="03XXXXXXXXX"></div>
+      <div class="f"><label>BILAL ka phone</label>
+        <input class="in mono" id="sBp" value="${esc(S.cfg.bilalPhone||'')}" placeholder="03XXXXXXXXX"></div>
+    </div>
+    <div class="row"><button class="btn p" onclick="saveCfg()">Save</button></div>
+  </div>
+
+  <div class="sec-h"><h3>AHMED ALI section ka password</h3></div>
+  <div class="card">
+    <div class="g2">
+      <div class="f"><label>Old password <i>*</i></label><input type="password" class="in mono" id="gOld"></div>
+      <div class="f"><label>Naya password <i>*</i></label><input type="password" class="in mono" id="gNew" maxlength="6"></div>
+    </div>
+    <div id="gterr" class="err"></div>
+    <div class="row"><button class="btn p" onclick="saveGate()">Change karein</button></div>
+  </div>`;
+}
+window.saveCfg=()=>{
+  DB.update('config',{yousufPhone:($('#sYp')||{}).value||'', bilalPhone:($('#sBp')||{}).value||''});
+  toast('Save ho gaya');
+};
+window.saveGate=()=>{
+  const o=($('#gOld')||{}).value||'', n=($('#gNew')||{}).value||'';
+  const e=$('#gterr');
+  if(o!==(S.cfg.aliGate||'5520')){ e.textContent='Old password ghalat hai.'; return; }
+  if(n.length<4){ e.textContent='Naya password kam az kam 4 digit ho.'; return; }
+  DB.update('config',{aliGate:n}); e.textContent=''; toast('Password change ho gaya');
+};
+window.editStaff=k=>{
+  const s=k?S.staff[k]:{name:'',pin:'',role:'sales',prot:false};
+  sheet(`<h3>${k?'Edit':'Naya salesperson'}</h3>
+    <div class="f"><label>Naam <i>*</i></label><input class="in" id="tN" value="${esc(s.name)}"></div>
+    <div class="f"><label>4 digit PIN <i>*</i></label><input class="in mono" id="tP" inputmode="numeric" maxlength="4" value="${esc(s.pin)}"></div>
+    <div class="f"><label>Role</label><select class="in" id="tR">
+      <option value="sales" ${s.role==='sales'?'selected':''}>Salesperson</option>
+      <option value="admin" ${s.role==='admin'?'selected':''}>Admin</option>
+      <option value="boss" ${s.role==='boss'?'selected':''}>Admin (full — Team access)</option></select></div>
+    <div class="f"><label><input type="checkbox" id="tPr" ${s.prot?'checked':''} style="width:auto;margin-right:8px">Private — sirf BILAL ko dikhe (Ahmed Ali wala rule)</label></div>
+    <div class="row"><button class="btn p wide" onclick="saveStaff('${k||''}')">Save</button>
+      ${k&&k!==S.me.id?`<button class="btn dgr sm" onclick="delStaff('${k}')">Delete</button>`:''}
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.saveStaff=k=>{
+  const n=$('#tN').value.trim(), p=$('#tP').value.trim();
+  if(!n||p.length!==4){ toast('Naam aur 4 digit PIN chahiye','bad'); return; }
+  const o={name:n, pin:p, role:$('#tR').value, prot:$('#tPr').checked||false};
+  if(k) DB.update('staff/'+k,o); else DB.push('staff',o);
+  closeSheet(); toast('Save ho gaya');
+};
+window.delStaff=k=>{ if(!confirm('Pakka delete?')) return; DB.set('staff/'+k,null); closeSheet(); toast('Hata diya'); };
+
+
+/* ==================================================================
+   ================  DEAL DESK v5 — NAYA SHELL  =====================
+   Sidebar (Outlet style) · per-salesperson boxes · timers · gates
+   ================================================================== */
+
+/* ---------- v5 CSS (inject) ---------- */
+document.head.insertAdjacentHTML('beforeend', `<style>
+:root{ --sbw:224px; --org:#F97316; --dark:#171310; --dark2:#211c18; }
+body{padding-left:0}
+.shell{display:flex;min-height:100vh}
+.sb{position:fixed;left:0;top:0;bottom:0;width:var(--sbw);background:var(--dark);color:#EDE7E0;z-index:60;
+  display:flex;flex-direction:column;padding:14px 10px;overflow:auto;transition:transform .2s}
+.sb .logo{display:flex;gap:10px;align-items:center;padding:6px 8px 16px;border-bottom:1px solid #2b2520;margin-bottom:10px}
+.sb .dc{width:38px;height:38px;border-radius:10px;background:var(--org);display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:#fff;font-size:15px;letter-spacing:-.5px;box-shadow:0 2px 8px rgba(249,115,22,.4)}
+.sb .lt b{display:block;font-size:14px;letter-spacing:.5px}
+.sb .lt b em{font-style:normal;color:var(--org)}
+.sb .lt small{font-size:9px;letter-spacing:2.4px;color:#8d8378;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;cursor:pointer;color:#C8BFB5;
+  font-size:13.5px;font-weight:600;margin:2px 0;user-select:none}
+.ni:hover{background:#241e19;color:#fff}
+.ni.on{background:var(--org);color:#fff;box-shadow:0 2px 10px rgba(249,115,22,.35)}
+.ni .ic{width:20px;text-align:center;font-size:15px}
+.ni .bdg{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;border-radius:99px;
+  min-width:19px;height:19px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.ni .bdg.g{background:var(--grn)}
+.sb .sbu{margin-top:auto;border-top:1px solid #2b2520;padding:12px 8px 2px;font-size:12px;color:#8d8378}
+.sb .sbu b{display:block;color:#fff;font-size:13px}
+.content{flex:1;margin-left:var(--sbw);padding:16px 18px 60px;max-width:1120px}
+.ctop{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.ctop h2{margin:0;font-size:20px;letter-spacing:-.4px}
+.ctop .csub{color:var(--mut);font-size:12.5px}
+.ctop .srch{margin-left:auto;position:relative}
+.ctop .srch input{width:230px;padding:9px 12px 9px 32px;border:1px solid var(--line);border-radius:99px;background:#fff;font-size:13px}
+.ctop .srch:before{content:'🔍';position:absolute;left:10px;top:8px;font-size:12px;opacity:.6}
+.mtop{display:none}
+.burg{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;font-size:16px;cursor:pointer}
+.dim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:55;display:none}
+@media(max-width:900px){
+  .sb{transform:translateX(-105%)} body.sbo .sb{transform:none} body.sbo .dim{display:block}
+  .content{margin-left:0;padding:12px 12px 60px}
+  .mtop{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin:-12px -12px 12px;padding:10px 12px}
+  .mtop .dc{width:30px;height:30px;border-radius:8px;background:var(--org);color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .mtop b{font-size:14px} .mtop b em{font-style:normal;color:#F97316}
+  .ctop .srch input{width:100%} .ctop .srch{width:100%;margin-left:0}
+}
+/* salesperson boxes */
+.spgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:760px){.spgrid{grid-template-columns:1fr}}
+.spc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--sh);cursor:pointer;position:relative}
+.spc:hover{border-color:#cfd8ea}
+.spc .spn{font-weight:800;font-size:16.5px;display:flex;align-items:center;gap:9px}
+.spc .spn .av{width:34px;height:34px;border-radius:10px;background:var(--blu-bg);color:var(--blu-tx);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}
+.mini3.m2{grid-template-columns:repeat(2,1fr)}
+.mb{border-radius:12px;padding:11px 8px;text-align:center;border:1px solid transparent}
+.mb .v{font-family:var(--mono);font-weight:800;font-size:20px;line-height:1}
+.mb .k{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;margin-top:5px}
+.mb.g{background:var(--grn-bg);color:var(--grn-tx)} .mb.r{background:var(--red-bg);color:var(--red-tx)}
+.mb.o{background:var(--gold-bg);color:var(--gold-tx)} .mb.d{background:var(--gry-bg);color:var(--dim)}
+.mb.r .v{animation:vp 1.4s infinite}
+@keyframes vp{50%{opacity:.45}}
+/* bilal bhai card */
+.bbc{border-radius:16px;border:1px solid var(--line);padding:16px;background:var(--card);cursor:pointer;box-shadow:var(--sh);position:relative;overflow:hidden;margin-bottom:14px}
+.bbc .fill{position:absolute;inset:0;background:var(--red-bg);z-index:0;transition:width .5s}
+.bbc>.in2{position:relative;z-index:1;display:flex;align-items:center;gap:11px}
+.bbc .av{width:40px;height:40px;border-radius:12px;background:var(--grn-bg);color:var(--grn-tx);display:flex;align-items:center;justify-content:center;font-size:18px}
+.bbc b{font-size:15.5px}
+.bbc .sub2{font-size:11.5px;color:var(--mut)}
+.bbc.bl2{animation:bl2 .55s steps(1) infinite}
+@keyframes bl2{0%{background:var(--red);color:#fff}50%{background:#fff;color:var(--red-tx)}}
+.bbc.bl2 .sub2,.bbc.bl2 b{color:inherit}
+/* alarm */
+body.alarm{background:#8f1d22}
+body.alarm .sb{filter:saturate(.6)}
+.albn{background:var(--red);color:#fff;border-radius:14px;padding:14px 16px;font-weight:800;font-size:14.5px;
+  margin-bottom:14px;cursor:pointer;animation:abl .6s steps(1) infinite;text-align:center}
+@keyframes abl{0%{background:var(--red);color:#fff}50%{background:#fff;color:var(--red-tx);outline:3px solid var(--red)}}
+/* donut */
+.dnt{display:flex;gap:18px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:16px;box-shadow:var(--sh);margin-bottom:14px;flex-wrap:wrap}
+.dnt .lg2{flex:1;min-width:150px}
+.dnt .lr{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:4px 0}
+.dnt .lr i{width:11px;height:11px;border-radius:99px;display:block}
+.dnt .lr b{margin-left:auto;font-family:var(--mono)}
+/* chat drawer */
+.chdr{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.msgx{position:relative}
+.msgx .dx{position:absolute;top:2px;right:2px;border:0;background:transparent;color:var(--red-tx);cursor:pointer;font-size:11px;opacity:.55}
+.msgx .dx:hover{opacity:1}
+/* notes */
+.ntc{border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin:9px 0;background:var(--card)}
+.ntc.done{background:var(--grn-bg);border-color:#bfe8d2}
+.ntc.urg{background:var(--red-bg);border-color:#f3c1c3}
+.ntc .nt{white-space:pre-wrap;font-size:13.5px}
+.ntc .nm2{font-size:11px;color:var(--mut);margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.attx{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:6px 10px;
+  font-size:12px;margin:4px 6px 0 0;cursor:pointer;background:var(--card2)}
+.tmr2{font-family:var(--mono);font-weight:800}
+.secmini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:760px){.secmini{grid-template-columns:repeat(2,1fr)}}
+</style>`);
+
+/* ---------- v5 constants / helpers ---------- */
+const ALI_GATE='7320';           // hard-coded — kahin show/edit nahi hota
+const XRAY_GATE='XRAY';          // Ahmed leads+demands ka extra gate
+const RAMX=()=> Object.assign({},RAM_D, S.cfg.ramD||{});
+const SSDX=()=> Object.assign({},SSD_D, S.cfg.ssdD||{});
+function calcRate(k,ram,ssd){
+  const m=S.models[k]; if(!m) return null;
+  const d=(Number(RAMX()[ram])||0)+(Number(SSDX()[ssd])||0);
+  const base=Number(m.base)||0;
+  const list=base+d, minS=Number(m.sellMin)||base, floor=minS+d;
+  return {name:m.name, list, floor, base, d};
+}
+S.chatOpen={}; S.q2=''; S.notifs={}; S.mydata={}; S.notes={}; S.gateOk=false; S.xrayOk=false;
+const isSales=id=> (S.staff[id]||{}).role==='sales';
+const salesIds=()=> Object.keys(S.staff).filter(isSales);
+const initials=n=> String(n||'').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+function notify(uid,t){ DB.push('notifs/'+uid,{t,at:Date.now()}); }
+function notifyAdmins(t){ Object.keys(S.staff).filter(k=>isAdm(S.staff[k].role)).forEach(k=>notify(k,t)); }
+function myNotifs(){ return Object.entries((S.notifs||{})[S.me.id]||{}).map(([id,n])=>({id,...n})).sort((a,b)=>b.at-a.at); }
+const nUnread=()=> myNotifs().filter(n=>!n.read).length;
+const F2=x=>{ if(!S.q2) return true; const q=S.q2.toLowerCase();
+  return ((x.name||'')+' '+(x.phone||'')+' '+(x.p1||'')+' '+(x.model||'')).toLowerCase().includes(q); };
+window.setQ2=v=>{ S.q2=v; render(); const s=$('#q2i'); if(s){ s.focus(); s.value=v; s.setSelectionRange(v.length,v.length);} };
+const srchBox=()=>`<div class="srch"><input id="q2i" placeholder="Naam / number search…" value="${esc(S.q2)}" oninput="setQ2(this.value)"></div>`;
+
+/* chat visibility — Ahmed (prot) ke COD msgs sirf BILAL ko */
+const visMsg=m=> !(m.pv && S.me.role!=='boss');
+function unread(l){
+  const my=side(S.me.role); const a=(l.chat||[]).filter(visMsg); let c=0;
+  for(let i=a.length-1;i>=0;i--){ if(a[i].sd===my) break; c++; }
+  return c;
+}
+/* lead status maps (v4 compat): approved/rejected = "jawab aa gaya" */
+const isAns = l => l.status==='approved' || l.status==='rejected';
+const isOpenL = l => !['won','lost','solved'].includes(l.status) && !l.deny;
+const acted = l => (l.salesActAt||0) > (l.ansAt||0);
+const needAct = l => isAns(l) && !acted(l);
+const isRetouch = l => (isAns(l) && l.ansAt && (S.now-l.ansAt>24*HOUR) && !acted(l))
+  || (l.status==='booked' && dayDiff(l.visitDate)<=0);
+function postChat(id,text,extra){
+  const l=S.leads[id]; if(!l) return;
+  const msg={w:S.me.name, sd:side(S.me.role), t:text, at:Date.now()};
+  const chat=(l.chat||[]).concat([msg]);
+  const ex=Object.assign({}, extra||{});
+  if(S.me.role==='sales') ex.salesActAt=Date.now();
+  DB.update('leads/'+id, Object.assign({chat, updatedAt:Date.now()}, ex));
+}
+function postCodChat(id,text,extra){
+  const c=S.cods[id]; if(!c) return;
+  const msg={w:S.me.name, sd:side(S.me.role), t:text, at:Date.now()};
+  if(S.me.role==='sales' && prot(S.me.id)) msg.pv=true;  // sirf Bilal dekhe
+  DB.update('cods/'+id, Object.assign({chat:(c.chat||[]).concat([msg]), updatedAt:Date.now()}, extra||{}));
+}
+/* COD helpers */
+const codDue=c=> c.status==='accepted' && c.dueAt ? c.dueAt : 0;
+const codExpired=c=> c.status==='accepted' && c.dueAt && S.now>c.dueAt && !c.agreed;
+function alarmCods(){ return myCods().filter(codExpired); }
+function fmtLeft(ms){ if(ms<=0) return '0m';
+  const h=Math.floor(ms/HOUR), m=Math.floor((ms%HOUR)/MIN);
+  return (h?h+'h ':'')+m+'m'; }
+
+/* donut SVG */
+function donut(segs,total,label){
+  const R=44, C=2*Math.PI*R; let off=0;
+  const rings=segs.filter(s=>s.v>0).map(s=>{
+    const len=total? s.v/total*C : 0;
+    const el=`<circle r="${R}" cx="60" cy="60" fill="none" stroke="${s.c}" stroke-width="17"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`;
+    off+=len; return el; }).join('');
+  return `<svg width="120" height="120" viewBox="0 0 120 120">
+    <circle r="${R}" cx="60" cy="60" fill="none" stroke="var(--gry-bg)" stroke-width="17"/>${rings}
+    <text x="60" y="57" text-anchor="middle" font-size="22" font-weight="800" font-family="var(--mono)" fill="var(--txt)">${total}</text>
+    <text x="60" y="74" text-anchor="middle" font-size="9" fill="var(--dim)" letter-spacing="1">${label}</text></svg>`;
+}
+const lgRow=(c,t,v)=>`<div class="lr"><i style="background:${c}"></i>${t}<b>${v}</b></div>`;
+
+/* mini box */
+const mb=(v,k,cls)=>`<div class="mb ${cls}"><div class="v">${v}</div><div class="k">${k}</div></div>`;
+const rg=v=> v>0?'r':'g';
+
+/* ---------- boot (v5) ---------- */
+function boot(){
+  DB.watch('leads', v=>{ S.leads=v||{}; safeRender(); });
+  DB.watch('cods',  v=>{ S.cods =v||{}; safeRender(); });
+  DB.watch('reqs',  v=>{ S.reqs =v||{}; safeRender(); });
+  DB.watch('achat', v=>{ S.achat=v||{}; safeRender(); });
+  DB.watch('notifs',v=>{ S.notifs=v||{}; safeRender(); });
+  DB.watch('mydata',v=>{ S.mydata=v||{}; safeRender(); });
+  DB.watch('notes', v=>{ S.notes=v||{}; safeRender(); });
+  DB.watch('staff', v=>{ if(!v&&LIVE){ DB.set('staff',SEED_STAFF); return; } S.staff=v||SEED_STAFF; safeRender(); });
+  DB.watch('models',v=>{ if(!v&&LIVE){ DB.set('models',SEED_MODELS); return; } S.models=v||{}; safeRender(); });
+  DB.watch('config',v=>{ if(!v&&LIVE){ DB.set('config',SEED_CFG); return; } S.cfg=v||SEED_CFG; safeRender(); });
+  setInterval(()=>{ S.now=Date.now(); if(S.me) safeRender(); }, 15000);
+}
+window.sbT=()=> document.body.classList.toggle('sbo');
+window.sbC=()=> document.body.classList.remove('sbo');
+
+/* ---------- shell / render ---------- */
+function navFor(){
+  const adm=isAdm(S.me.role);
+  if(adm){
+    const t=[['dash','⌂','Dashboard',0],
+      ['leads','👥','New Leads',lCntAdm()],
+      ['cod','🚚','COD',cCntAdm()],
+      ['reqs','📋','Demands',rCntAdm()],
+      ['rates','💲','Rates',0],
+      ['report','📈','Report',0]];
+    if(S.me.role==='boss') t.push(['team','⚙','Team & Settings',0]);
+    t.push(['notifs','🔔','Notifications',nUnread()]);
+    return t;
+  }
+  return [['dash','⌂','Dashboard',0],
+    ['leads','👥','Meri Leads',myLeads().filter(l=>needAct(l)||isRetouch(l)).length],
+    ['new','＋','Nayi Lead',0],
+    ['cod','🚚','COD',myCods().filter(c=>codExpired(c)).length],
+    ['reqs','📋','Demands',0],
+    ['calc','🖩','Calculator',0],
+    ['mydata','🗂','My Data',0],
+    ['notifs','🔔','Notifications',nUnread()]];
+}
+function lCntAdm(){ return myLeads().filter(l=>l.status==='pending' && !l.deny).length; }
+function cCntAdm(){ return myCods().filter(c=>c.status==='sent').length; }
+function rCntAdm(){ return myReqs().filter(r=>r.status==='open' && !(r.hide||{})[S.me.id]).length; }
+
+function render(){
+  if(!S.me){ app.innerHTML=loginView(); document.body.classList.remove('alarm'); return; }
+  const alarms=alarmCods();
+  document.body.classList.toggle('alarm', alarms.length>0);
+  const nav=navFor();
+  const V={ dash:()=> isAdm(S.me.role)?vDashA():vDashS(),
+    leads:()=> isAdm(S.me.role)?vLeadsA():vLeadsS(),
+    new:viewNew, cod:()=> vCod(), codnew:viewCodNew, reqs:()=> vReqs(),
+    rates:vRatesX, report:viewReport, team:vTeamX, calc:viewCalc,
+    mydata:vMyData, notifs:vNotifs }[S.tab] || (()=> isAdm(S.me.role)?vDashA():vDashS());
+  const banner = alarms.length? `<div class="albn" onclick="go('cod')">🚨 COD DELAY — ${alarms.map(c=>esc(c.name)).join(' · ')} — ${isAdm(S.me.role)?'salesperson ka I AGREE baqi hai':'COD khol kar I AGREE karein'} 🚨</div>`:'';
+  app.innerHTML=`<div class="shell">
+    <div class="dim" onclick="sbC()"></div>
+    <div class="sb">
+      <div class="logo"><div class="dc">DC</div><div class="lt"><b>DENZEN <em>CO.</em></b><small>Deal Desk</small></div></div>
+      ${nav.map(([k,ic,t,b])=>`<div class="ni ${S.tab===k?'on':''}" onclick="go('${k}');sbC()">
+        <span class="ic">${ic}</span>${t}${b?`<span class="bdg">${b>99?'99+':b}</span>`:''}</div>`).join('')}
+      <div class="sbu"><b>${esc(S.me.name)}</b>${isAdm(S.me.role)?'Admin':'Salesperson'}
+        <div style="margin-top:8px"><button class="btn sm gh" style="width:100%" onclick="logout()">Logout</button></div></div>
+    </div>
+    <div class="content">
+      <div class="mtop"><button class="burg" onclick="sbT()">☰</button><div class="dc">DC</div><b>DENZEN <em>CO.</em></b>
+        <span style="margin-left:auto;font-size:12px;color:var(--mut)">${esc(S.me.name)}</span></div>
+      ${banner}
+      <div id="view"></div>
+    </div></div>`;
+  const v=$('#view'); if(v) v.innerHTML=V();
+  if(S.tab==='new'||S.tab==='calc') (S.tab==='new'?wireNew:wireCalcTab)();
+  if(S.tab==='codnew') wireCodForm();
+}
+window.go=k=>{ if(S.tab==='new') keepDraft(); if(S.tab==='codnew') keepCod();
+  S.tab=k; S.sp=null; S.full=null; S.codFull=null; S.q2=''; S.gateOk=false; S.xrayOk=false;
+  render(); window.scrollTo(0,0); };
+window.spSel=(k,mod)=>{
+  if(k && prot(k)){
+    if(S.me.role!=='boss' && mod!=='cod'){ toast('Ye section available nahi','bad'); return; }
+    if(S.me.role==='boss' && !S.gateOk){ gateSheet(k,mod); return; }
+    if(S.me.role==='boss' && (mod==='leads'||mod==='reqs') && !S.xrayOk){ xraySheet(k,mod); return; }
+  }
+  S.sp=k||null; S.full=null; S.codFull=null; render(); window.scrollTo(0,0);
+};
+function gateSheet(k,mod){
+  sheet(`<h3>AHMED ALI — password</h3>
+    <div class="f"><input type="password" class="in mono" id="gI" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')gateGo('${k}','${mod}')"></div>
+    <div id="gE" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="gateGo('${k}','${mod}')">Kholein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+  setTimeout(()=>{ const i=$('#gI'); if(i) i.focus(); },60);
+}
+window.gateGo=(k,mod)=>{
+  if((($('#gI')||{}).value||'')!==ALI_GATE){ $('#gE').textContent='Password ghalat hai.'; return; }
+  S.gateOk=true; closeSheet(); spSel(k,mod);
+};
+function xraySheet(k,mod){
+  sheet(`<h3>Leads / Demands — extra password</h3>
+    <div class="f"><input type="password" class="in" id="xI" placeholder="••••" onkeydown="if(event.key==='Enter')xrayGo('${k}','${mod}')"></div>
+    <div id="xE" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="xrayGo('${k}','${mod}')">Kholein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+  setTimeout(()=>{ const i=$('#xI'); if(i) i.focus(); },60);
+}
+window.xrayGo=(k,mod)=>{
+  if((($('#xI')||{}).value||'')!==XRAY_GATE){ $('#xE').textContent='Password ghalat hai.'; return; }
+  S.xrayOk=true; closeSheet(); spSel(k,mod);
+};
+
+/* ==================================================================
+   ADMIN DASHBOARD
+   ================================================================== */
+function spLeadCnt(id){
+  const L=Object.values(S.leads).filter(l=>l.by===id && !l.deny);
+  return { un:L.filter(l=>l.status==='pending').length,
+           pd:L.filter(l=>isAns(l)||l.status==='booked').length,
+           rt:L.filter(isRetouch).length };
+}
+function spCodCnt(id){
+  const C=Object.values(S.cods).filter(c=>c.by===id);
+  return { nw:C.filter(c=>c.status==='sent').length,
+           pd:C.filter(c=>c.status==='accepted').length,
+           dn:C.filter(c=>c.status==='done').length };
+}
+function spReqCnt(id){
+  const R=Object.values(S.reqs).filter(r=>r.by===id && !(r.hide||{})[S.me.id]);
+  return { op:R.filter(r=>r.status==='open').length, an:R.filter(r=>r.status==='answered').length };
+}
+function chatCard(){  // BILAL BHAI / YOUSUF card + drawer
+  const other=S.me.id==='bilal'?'YOUSUF':'BILAL BHAI';
+  const u=achatUnread(); const la=(S.me.id==='yousuf')?lockAt():0;
+  let pct=0; if(la){ const e=S.now-la; pct=Math.max(0,Math.min(1,(e-30*MIN)/(90*MIN))); }
+  const full=pct>=1;
+  const open=!!S.chatOpen.a;
+  return `<div class="bbc ${full?'bl2':''}" onclick="chatT('a')">
+      ${(!full&&pct>0)?`<div class="fill" style="width:${Math.round(pct*100)}%"></div>`:''}
+      <div class="in2"><div class="av">💬</div>
+        <div><b>${other}</b><div class="sub2">${u?u+' naya message':'koi naya message nahi'} · ${open?'▾ band karein':'▸ chat kholein'}</div></div>
+        ${u?`<span class="ub" style="margin-left:auto">${u}</span>`:''}</div>
+    </div>${open?achatBox():''}`;
+}
+window.chatT=k=>{ S.chatOpen[k]=!S.chatOpen[k]; render(); };
+window.sendA=()=>{
+  const el=$('#aIn'); if(!el) return; const t=el.value.trim(); if(!t) return;
+  const meK=S.me.id==='bilal'?'bilal':'yousuf';
+  DB.push('achat',{f:meK,t,at:Date.now()}); el.value='';
+};
+function achatBox(){
+  const meK=S.me.id==='bilal'?'bilal':'yousuf';
+  const boss=S.me.role==='boss';
+  const msgs=achatArr().slice(-40).map(m=>`<div class="m ${m.f===meK?'me':'th'} msgx">
+      ${boss?`<button class="dx" onclick="event.stopPropagation();delAmsg('${m.id}')">✕</button>`:''}
+      ${m.f===meK?'':`<div class="w">${esc(m.f.toUpperCase())}</div>`}<div>${esc(m.t)}</div><div class="tm">${stamp(m.at)}</div></div>`).join('');
+  return `<div class="card" id="achatBox">
+    <div class="msgs" style="max-height:280px;overflow:auto">${msgs||'<div class="hint">Seedha message yahan se karein.</div>'}</div>
+    <div class="chatrow">
+      <input class="in" id="aIn" placeholder="Message…" onkeydown="if(event.key==='Enter')sendA()">
+      <button class="btn p" onclick="sendA()">Bhejein</button>
+      ${boss?`<button class="btn dgr sm" onclick="clearAchat()">Clear</button>`:''}
+    </div></div>`;
+}
+window.delAmsg=id=>{ DB.set('achat/'+id,null); };
+window.clearAchat=()=>{ if(!confirm('Poori chat dono taraf se clear ho jayegi. Pakka?')) return; DB.set('achat',null); toast('Chat clear'); };
+
+function vDashA(){
+  const all=myLeads().filter(l=>!l.deny);
+  const pend=all.filter(l=>l.status==='pending').length;
+  const ans=all.filter(l=>isAns(l)||l.status==='booked').length;
+  const done=all.filter(l=>['won','solved','lost'].includes(l.status)).length;
+  const cards=salesIds().map(id=>{
+    const s=S.staff[id];
+    if(prot(id) && S.me.role!=='boss'){    // Yousuf: Ahmed sirf COD
+      const c=spCodCnt(id);
+      return `<div class="spc" onclick="S.tab='cod';spSel('${id}','cod')">
+        <div class="spn"><span class="av">${initials(s.name)}</span>${esc(s.name)}</div>
+        <div class="mini3"><div></div>${mb(c.nw+c.pd,'COD',rg(c.nw+c.pd))}<div></div></div></div>`;
+    }
+    const l=spLeadCnt(id), c=spCodCnt(id), r=spReqCnt(id);
+    return `<div class="spc" onclick="S.tab='leads';spSel('${id}','leads')">
+      <div class="spn"><span class="av">${initials(s.name)}</span>${esc(s.name)}
+        ${l.rt?`<span class="chip c-amb" style="margin-left:auto">Retouch ${l.rt}</span>`:''}</div>
+      <div class="mini3">
+        ${mb(l.un,'New Leads',rg(l.un))}${mb(c.nw+c.pd,'COD',rg(c.nw+c.pd))}${mb(r.op,'Demand',rg(r.op))}
+      </div>
+      ${l.pd?`<div class="hint" style="margin-top:9px">Pending (jawab diya, close baqi): <b>${l.pd}</b></div>`:''}
+    </div>`;
+  }).join('');
+  return `<div class="ctop"><div><h2>Dashboard</h2><div class="csub">Daily leads overview — ${esc(S.me.name)}</div></div></div>`
+    + chatCard()
+    + `<div class="dnt">${donut([{v:pend,c:'#E5484D'},{v:ans,c:'#F0A800'},{v:done,c:'#12B76A'}],all.length,'LEADS')}
+       <div class="lg2">${lgRow('#E5484D','Jawab dena hai',pend)}${lgRow('#F0A800','Chal rahi hain',ans)}${lgRow('#12B76A','Close (purchase/solve/lost)',done)}</div></div>`
+    + `<div class="spgrid">${cards}</div>`;
+}
+
+/* ==================================================================
+   ADMIN — LEADS module
+   ================================================================== */
+function spBoxes(mod){
+  const cards=salesIds().filter(id=> !(prot(id) && S.me.role!=='boss' && mod!=='cod')).map(id=>{
+    const s=S.staff[id]; let inner='';
+    if(mod==='leads'){ const l=spLeadCnt(id);
+      inner=`<div class="mini3">${mb(l.un,'Bina jawab',rg(l.un))}${mb(l.pd,'Pending',l.pd?'o':'g')}${mb(l.rt,'Retouch',l.rt?'o':'g')}</div>`; }
+    if(mod==='cod'){ const c=spCodCnt(id);
+      inner=`<div class="mini3">${mb(c.nw,'New COD',rg(c.nw))}${mb(c.pd,'Pending',rg(c.pd))}${mb(c.dn,'Complete','g')}</div>`; }
+    if(mod==='reqs'){ const r=spReqCnt(id);
+      inner=`<div class="mini3 m2">${mb(r.op,'Demands',rg(r.op))}${mb(r.an,'Jawab diya','g')}</div>`; }
+    return `<div class="spc" onclick="spSel('${id}','${mod}')">
+      <div class="spn"><span class="av">${initials(s.name)}</span>${esc(s.name)}${prot(id)?' <span style="opacity:.4;font-size:12px">·</span>':''}</div>${inner}</div>`;
+  }).join('');
+  return `<div class="spgrid">${cards}</div>`;
+}
+function backBtn(fn){ return `<div class="row" style="margin:0 0 12px"><button class="btn sm" onclick="${fn}">← Wapis</button></div>`; }
+
+function vLeadsA(){
+  if(S.full!=null && S.leads[S.full]) return leadFull(S.full);
+  if(!S.sp) return `<div class="ctop"><div><h2>New Leads</h2><div class="csub">Salesperson chunein</div></div></div>`+spBoxes('leads');
+  const s=S.staff[S.sp]||{};
+  const L=Object.entries(S.leads).map(([id,l])=>({id,...l})).filter(l=>l.by===S.sp)
+    .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const open=L.filter(l=>isOpenL(l)&&F2(l));
+  const un=open.filter(l=>l.status==='pending');
+  const rest=open.filter(l=>l.status!=='pending');
+  const solved=L.filter(l=>l.status==='solved');
+  const closed=L.filter(l=>l.status==='won'||l.status==='lost');
+  const deny=L.filter(l=>l.deny);
+  return backBtn("spSel(null)")
+    +`<div class="ctop"><div><h2>${esc(s.name)}</h2><div class="csub">${open.length} open leads</div></div>${srchBox()}</div>`
+    + grp2v(un,'Jawab dena hai')
+    + grp2v(rest,'Chal rahi hain')
+    + dropGrp('slv','Solved',solved,solved.map(lRow).join(''))
+    + dropGrp('cls','Purchase / Lost',closed,closed.map(lRow).join(''))
+    + dropGrp('dny','Deny (aap ke paas)',deny,deny.map(lRow).join(''))
+    + (L.length?'':empty('Is salesperson ki koi lead nahi'));
+}
+function grp2v(list,title){
+  if(!list.length) return '';
+  return `<div class="sec-h"><h3>${title}</h3><span class="ct">${list.length}</span></div>`+list.map(lRow).join('');
+}
+function lRow(l){
+  const st = l.deny? {c:'c-gry',t:'DENY'} : l.status==='solved'? {c:'c-grn',t:'SOLVED'} : (STAT[l.status]||STAT.pending);
+  const u=unread(l);
+  return `<div class="cc ${court(l)}" onclick="openL('${l.id}')">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(l.name)}</div>
+      <div class="sub">${esc(l.model)} · ${esc(l.phone||'')}</div></div>
+      <div class="end">${isRetouch(l)?'<span class="chip c-amb">RETOUCH</span>':''}
+        ${l.priority==='urgent'&&isOpenL(l)?'<span class="chip c-red">URGENT</span>':''}
+        <span class="chip ${st.c}">${st.t}</span>${u?`<span class="ub">${u}</span>`:''}</div></div>
+    ${trio(l)}</div>`;
+}
+window.openL=id=>{ S.full=id; render(); window.scrollTo(0,0); };
+window.closeL=()=>{ S.full=null; render(); };
+
+function leadFull(id){
+  const l={id,...S.leads[id]}; const adm=isAdm(S.me.role);
+  const u=unread(l); const open=!!S.chatOpen['L'+id];
+  const boss=S.me.role==='boss';
+  const msgs=(l.chat||[]).filter(visMsg).map((m,i)=>`<div class="m ${m.sd===side(S.me.role)?'me':'th'} msgx">
+      ${boss?`<button class="dx" onclick="event.stopPropagation();delLmsg('${id}',${i})">✕</button>`:''}
+      ${m.sd===side(S.me.role)?'':`<div class="w">${esc(m.w)}</div>`}<div>${esc(m.t)}</div><div class="tm">${stamp(m.at)}</div></div>`).join('');
+  const st=l.deny?{c:'c-gry',t:'DENY'}:l.status==='solved'?{c:'c-grn',t:'SOLVED'}:(STAT[l.status]||STAT.pending);
+  return backBtn("closeL()")+`
+  <div class="card">
+    <div class="row1"><div><div class="nm" style="font-size:18px">${esc(l.name)}</div>
+      <div class="sub">${esc(l.model)} · ${l.ram}GB/${l.ssd}GB · ${esc(l.phone||'')} · by ${esc(l.byName||'')}</div></div>
+      <div class="end">${isRetouch(l)?'<span class="chip c-amb">RETOUCH</span>':''}<span class="chip ${st.c}">${st.t}</span></div></div>
+    ${trio(l)}
+    <div class="kv"><i>Budget</i><b class="mono">${PKR(l.budget)}</b></div>
+    ${l.usage?`<div class="kv"><i>Kaam</i><b>${esc(l.usage)}</b></div>`:''}
+    ${l.detail?`<div class="hint" style="margin-top:6px">${esc(l.detail)}</div>`:''}
+    ${l.status==='booked'?`<div class="kv"><i>Nayi date</i><b>${dLabel(l.visitDate)}</b></div>`:''}
+    ${l.solved?`<div class="kv"><i>Solve — ${esc(l.solved.by||'')}</i><b>${esc(l.solved.reason||'')}</b></div>`:''}
+    <div class="row" style="margin-top:12px;flex-wrap:wrap">
+      ${adm && isOpenL(l) ? `<button class="btn p" onclick="rateSheet('${l.id}')">💲 Rate / jawab dein</button>
+        <button class="btn" onclick="solveSheet('${l.id}')">Solve</button>
+        <button class="btn dgr" onclick="delSheet('${l.id}')">Delete</button>`:''}
+      ${!adm && isOpenL(l) ? `<button class="btn p" onclick="dateSheet('${l.id}')">📅 Nayi date</button>
+        <button class="btn" onclick="solveSheet('${l.id}')">Solve</button>
+        <button class="btn ok" onclick="wonSheet('${l.id}')">Purchase</button>`:''}
+      ${l.status==='solved'?`<button class="btn" onclick="reopen2('${l.id}')">↩ Dobara kholein / zinda karein</button>`:''}
+      ${l.deny&&adm?`<button class="btn" onclick="undeny('${l.id}')">↩ Wapis lein</button>
+        <button class="btn dgr" onclick="delLead('${l.id}',1)">🗑 Permanent</button>`:''}
+    </div>
+    <div class="chdr">
+      <div class="drop-h" onclick="chatT('L${id}')" style="margin:0"><h3>💬 Baat cheet</h3>
+        ${u?`<span class="ub">${u}</span>`:''}<span class="ch">${open?'▾ band karein':'▸ kholein'}</span></div>
+      ${open?`<div class="msgs" style="max-height:300px;overflow:auto;margin-top:8px">${msgs||'<div class="hint">Abhi koi message nahi.</div>'}</div>
+      <div class="chatrow"><input class="in" id="chatIn" placeholder="Message…" onkeydown="if(event.key==='Enter')chatSend('${id}')">
+        <button class="btn p" onclick="chatSend('${id}')">Bhejein</button>
+        ${boss?`<button class="btn dgr sm" onclick="clearLchat('${id}')">Clear</button>`:''}</div>`:''}
+    </div>
+  </div>`;
+}
+window.delLmsg=(id,i)=>{ const l=S.leads[id]; if(!l) return;
+  const chat=(l.chat||[]).slice(); chat.splice(i,1); DB.update('leads/'+id,{chat}); };
+window.clearLchat=id=>{ if(!confirm('Chat dono taraf se clear? Pakka?')) return; DB.update('leads/'+id,{chat:[]}); };
+
+/* Rate → Done (approval) */
+window.rateSheet=id=>{
+  const l=S.leads[id];
+  sheet(`<h3>Rate + jawab</h3>
+    <div class="g2"><div class="f"><label>Final rate</label><input class="in mono" id="rR" inputmode="numeric" value="${l.floor||''}"></div>
+    <div class="f"><label>&nbsp;</label><div class="hint" style="margin-top:12px">Least ${K(l.floor)} · Customer ${K(l.offer)}</div></div></div>
+    <div class="f"><label>Message (jo kehna hai)</label><textarea class="in" id="rM" placeholder="Is rate par de dein / aur baat karein…"></textarea></div>
+    <div class="row"><button class="btn ok wide" onclick="rateDone('${id}')">Done — approval bhejein</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.rateDone=id=>{
+  const r=Number(($('#rR')||{}).value)||0, m=(($('#rM')||{}).value||'').trim();
+  const now=Date.now();
+  postChat(id, '✅ Approval — rate '+PKR(r)+(m?' · '+m:''), {status:'approved', ansAt:now, approvedRate:r});
+  notify(S.leads[id].by, '💲 "'+(S.leads[id].name)+'" ka jawab aa gaya — rate '+PKR(r));
+  closeSheet(); toast('Approval chali gayi');
+};
+/* Delete → Deny / Permanent */
+window.delSheet=id=> sheet(`<h3>Delete</h3>
+  <div class="hint" style="margin-bottom:10px">Deny = lead aap ke "Deny" section mein chali jayegi aur counting se minus. Permanent = bilkul delete, dono taraf se.</div>
+  <div class="row"><button class="btn wide" onclick="denyL('${id}')">Deny — mere paas rakhein</button>
+    <button class="btn dgr wide" onclick="delLead('${id}',1)">🗑 Permanent delete</button></div>
+  <div class="row"><button class="btn gh wide" onclick="closeSheet()">Cancel</button></div>`);
+window.denyL=id=>{ DB.update('leads/'+id,{deny:true,updatedAt:Date.now()}); closeSheet(); S.full=null; render(); toast('Deny — counting se minus'); };
+window.undeny=id=>{ DB.update('leads/'+id,{deny:null,updatedAt:Date.now()}); toast('Wapis aa gayi'); };
+/* Solve */
+window.solveSheet=id=> sheet(`<h3>Solve</h3>
+  <div class="f"><label>Reason ${S.me.role==='sales'?'<i>*</i> (admin ko notification jayegi)':''}</label>
+    <textarea class="in" id="svR" placeholder="Kyun solve kar rahe hain…"></textarea></div>
+  <div class="row"><button class="btn ok wide" onclick="saveSolve('${id}')">Solve karein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.saveSolve=id=>{
+  const r=(($('#svR')||{}).value||'').trim();
+  if(S.me.role==='sales' && !r){ toast('Reason likhna zaroori hai','bad'); return; }
+  const l=S.leads[id];
+  postChat(id,'🟩 Solve — '+(r||'—'),{status:'solved', solved:{by:S.me.name, reason:r, at:Date.now()}});
+  if(S.me.role==='sales') notifyAdmins('🟩 '+S.me.name+' ne "'+l.name+'" solve ki — reason: '+r);
+  else notify(l.by,'🟩 Admin ne "'+l.name+'" solve kar di'+(r?' — '+r:''));
+  closeSheet(); toast('Solve ho gayi');
+};
+window.reopen2=id=>{ const l=S.leads[id];
+  postChat(id,'↩ Dobara kholi',{status:l.ansAt?'approved':'pending', solved:null}); toast('Zinda ho gayi'); };
+/* Nayi date (sales) */
+window.dateSheet=id=> sheet(`<h3>Nayi date</h3>
+  <div class="f"><label>Customer kab aayega / follow-up</label><input type="date" class="in" id="dD" value="${today()}"></div>
+  <div class="row"><button class="btn p wide" onclick="saveDate('${id}')">Save</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.saveDate=id=>{
+  const d=($('#dD')||{}).value; if(!d){ toast('Date chunein','bad'); return; }
+  postChat(id,'📅 Nayi date — '+dLabel(d),{status:'booked', visitDate:d});
+  closeSheet(); toast('Waiting mein chali gayi — date par retouch aayega');
+};
+
+/* ==================================================================
+   SALES — DASHBOARD + MERI LEADS
+   ================================================================== */
+function vDashS(){
+  const all=myLeads();
+  const na=all.filter(needAct).length;
+  const pd=all.filter(l=>l.status==='pending').length;
+  const rt=all.filter(isRetouch).length;
+  const C=myCods();
+  const cw=C.filter(c=>c.status==='sent').length;
+  const cp=C.filter(c=>c.status==='accepted').length;
+  const cd=C.filter(c=>c.status==='done').length;
+  const R=myReqs().filter(r=>!(r.hide||{})[S.me.id]);
+  const ro=R.filter(r=>r.status==='open').length, ra=R.filter(r=>r.status==='answered').length;
+  const B=(v,k,cls,tab)=>`<div class="mb ${cls}" style="cursor:pointer;padding:15px 8px" onclick="go('${tab}')"><div class="v" style="font-size:24px">${v}</div><div class="k">${k}</div></div>`;
+  return `<div class="ctop"><div><h2>Dashboard</h2><div class="csub">${esc(S.me.name)} — aaj ka kaam</div></div></div>
+  <div class="dnt">${donut([{v:na+rt,c:'#E5484D'},{v:pd,c:'#F0A800'},{v:all.filter(l=>l.status==='won').length,c:'#12B76A'}],all.length,'LEADS')}
+    <div class="lg2">${lgRow('#E5484D','Action lena hai',na+rt)}${lgRow('#F0A800','Admin ke paas',pd)}${lgRow('#12B76A','Purchase',all.filter(l=>l.status==='won').length)}</div></div>
+  <div class="secmini">
+    ${B(na,'Jawab aa gaya',rg(na),'leads')}${B(pd,'Pending',pd?'o':'g','leads')}
+    ${B(rt,'Retouch',rg(rt),'leads')}${B(cw,'COD — jawab ka intezar',rg(cw),'cod')}
+    ${B(cp,'Pending COD',rg(cp),'cod')}${B(cd,'Complete COD','g','cod')}
+    ${B(ro,'Demand — intezar',ro?'o':'g','reqs')}${B(ra,'Demand — jawab aa gaya',ra?'r':'g','reqs')}
+  </div>`;
+}
+function vLeadsS(){
+  if(S.full!=null && S.leads[S.full]) return leadFull(S.full);
+  const all=myLeads().filter(F2);
+  const na=all.filter(needAct);
+  const pd=all.filter(l=>l.status==='pending');
+  const bk=all.filter(l=>l.status==='booked' && !isRetouch(l));
+  const rt=all.filter(isRetouch);
+  const slv=all.filter(l=>l.status==='solved');
+  const won=all.filter(l=>l.status==='won'), lo=all.filter(l=>l.status==='lost');
+  return `<div class="ctop"><div><h2>Meri Leads</h2><div class="csub">${all.length} total</div></div>${srchBox()}</div>
+  <div class="secmini">
+    ${mb(na.length,'Jawab aa gaya',rg(na.length))}${mb(pd.length,'Pending',pd.length?'o':'g')}
+    ${mb(bk.length,'Nayi date','d')}${mb(rt.length,'Retouch',rg(rt.length))}
+  </div>`
+  + grp2v(rt,'Retouch — pehle ye karein')
+  + grp2v(na,'Jawab aa gaya — action lein')
+  + grp2v(pd,'Admin ke jawab ka intezar')
+  + grp2v(bk,'Nayi date — waiting')
+  + dropGrp('slv2','Solved',slv,slv.map(lRow).join(''))
+  + dropGrp('won2','Purchase',won,won.map(lRow).join(''))
+  + dropGrp('lo2','Lost',lo,lo.map(lRow).join(''))
+  + (all.length?'':empty('Koi lead nahi','Sidebar se "＋ Nayi Lead".'));
+}
+
+/* ==================================================================
+   COD — dono taraf
+   ================================================================== */
+function vCod(){
+  if(S.codFull!=null && S.cods[S.codFull]) return codFull(S.codFull);
+  const adm=isAdm(S.me.role);
+  if(adm && !S.sp)
+    return `<div class="ctop"><div><h2>COD</h2><div class="csub">Salesperson chunein</div></div></div>`+spBoxes('cod');
+  const list=(adm? Object.entries(S.cods).map(([id,c])=>({id,...c})).filter(c=>c.by===S.sp) : myCods())
+    .filter(F2).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const nw=list.filter(c=>c.status==='sent'||c.status==='ready');
+  const pd=list.filter(c=>c.status==='accepted');
+  const cold=list.filter(c=>c.status==='cold');
+  const dny=list.filter(c=>c.status==='denied');
+  const dn=list.filter(c=>c.status==='done');
+  const head = adm? backBtn("spSel(null)")+`<div class="ctop"><div><h2>${esc((S.staff[S.sp]||{}).name)}</h2><div class="csub">COD</div></div>${srchBox()}</div>`
+    : `<div class="ctop"><div><h2>COD</h2></div>${srchBox()}
+       <div class="row"><button class="btn p" onclick="go('codnew')">＋ Naya COD</button></div></div>`;
+  return head
+    + grp3(nw,'New COD') + grp3(pd,'Pending — timer chal raha hai')
+    + grp3(cold,'Cold — timer khatam, I AGREE ho chuka')
+    + grp3(dny,'Not available (deny)')
+    + dropGrp('cds','Solved',list.filter(c=>c.status==='solved2'),list.filter(c=>c.status==='solved2').map(codRow).join(''))
+    + dropGrp('cdn','Complete COD',dn,dn.map(codRow).join(''))
+    + (list.length?'':empty('Koi COD nahi'));
+}
+function grp3(list,title){ if(!list.length) return '';
+  return `<div class="sec-h"><h3>${title}</h3><span class="ct">${list.length}</span></div>`+list.map(codRow).join(''); }
+function codRow(c){
+  const chips={ready:['c-blu','Send baqi'],sent:['c-red','New'],accepted:[codExpired(c)?'c-red':'c-amb',codExpired(c)?'DELAY!':'Timer'],
+    cold:['c-gry','Cold'],denied:['c-gry','Deny'],done:['c-grn','COMPLETE']};
+  const ch=chips[c.status]||['c-gry',c.status];
+  const u=(c.chat||[]).filter(visMsg).length && unreadCod(c) ? `<span class="ub">${unreadCod(c)}</span>`:'';
+  return `<div class="cc" onclick="openC('${c.id}')">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(c.name)}</div>
+      <div class="sub">${esc(c.model)} · ${esc(c.city)} · ${PKR(c.total)}</div></div>
+      <div class="end">${c.status==='accepted'?`<span class="chip ${codExpired(c)?'c-red':'c-amb'}"><span class="tmr2">${codExpired(c)?'DELAY':fmtLeft(c.dueAt-S.now)}</span></span>`:''}
+      <span class="chip ${ch[0]}">${ch[1]}</span>${u}</div></div></div>`;
+}
+function unreadCod(c){
+  const my=side(S.me.role); const a=(c.chat||[]).filter(visMsg); let n=0;
+  for(let i=a.length-1;i>=0;i--){ if(a[i].sd===my) break; n++; } return n;
+}
+window.openC=id=>{ S.codFull=id; render(); window.scrollTo(0,0); };
+window.closeC=()=>{ S.codFull=null; render(); };
+
+function codFull(id){
+  const c={id,...S.cods[id]}; const adm=isAdm(S.me.role); const boss=S.me.role==='boss';
+  const mine=c.by===S.me.id;
+  const protCod=prot(c.by);
+  const open=!!S.chatOpen['C'+id];
+  const canChat = adm ? !(protCod && !boss) : true;   // Yousuf ↔ Ahmed: sirf form/status
+  const msgs=(c.chat||[]).filter(visMsg).map((m,i)=>`<div class="m ${m.sd===side(S.me.role)?'me':'th'} msgx">
+      ${boss?`<button class="dx" onclick="event.stopPropagation();delCmsg('${id}',${i})">✕</button>
+        ${m.pv?`<button class="dx" style="right:20px" title="Forward" onclick="event.stopPropagation();fwdSheet('${id}',${i})">➤</button>`:''}`:''}
+      ${m.sd===side(S.me.role)?'':`<div class="w">${esc(m.w)}${m.pv?' · sirf aap ko':''}${m.fwd?' (forwarded)':''}</div>`}
+      <div>${esc(m.t)}</div><div class="tm">${stamp(m.at)}</div></div>`).join('');
+  return backBtn(adm?"closeC()":"closeC()")+`
+  <div class="card">
+    <div class="row1"><div><div class="nm" style="font-size:18px">${esc(c.name)}</div>
+      <div class="sub">${esc(c.model)} ${esc(c.gen||'')} · ${c.ram}GB/${c.sto}GB · ${esc(c.city)} · by ${esc(c.byName||'')}</div></div>
+      <div class="end"><span class="chip ${c.status==='done'?'c-grn':c.status==='sent'?'c-red':'c-amb'}">${c.status.toUpperCase()}</span></div></div>
+    <div class="kv"><i>Phone</i><b class="mono">${esc(c.p1)}${c.p2?' · '+esc(c.p2):''}</b></div>
+    <div class="kv"><i>Address</i><b style="text-align:right;max-width:65%">${esc(c.addr)}</b></div>
+    <div class="kv"><i>Total COD</i><b class="mono fin-red" style="font-size:17px">${PKR(c.total)}</b></div>
+    ${c.status==='accepted'?`<div class="kv"><i>Timer</i><b class="tmr2 ${codExpired(c)?'':''}" style="color:${codExpired(c)?'var(--red-tx)':'var(--gold-tx)'}">${codExpired(c)?'WAQT KHATAM':fmtLeft(c.dueAt-S.now)+' baqi'}</b></div>`:''}
+    ${c.denyReason?`<div class="kv"><i>Deny reason</i><b>${esc(c.denyReason)}</b></div>`:''}
+    ${c.delReason?`<div class="kv"><i>Delete reason</i><b>${esc(c.delReason)}</b></div>`:''}
+    <div class="row" style="margin-top:12px;flex-wrap:wrap">
+      <button class="btn" onclick="codView('${id}')">📄 PDF dekhein</button>
+      <button class="btn gh" onclick="pdfCod('${id}')">⬇ Download</button>
+      ${adm?`<button class="btn gh" onclick="codEdit('${id}')">✏ Edit</button>`:''}
+      ${c.slip?`<button class="btn ok" onclick="slipView('${id}')">🧾 Slip dekhein</button>`:''}
+    </div>
+    ${adm && c.status==='sent' ? `<div class="row" style="margin-top:10px;flex-wrap:wrap">
+      <button class="btn dgr" onclick="codDeny('${id}')">Not available</button>
+      <button class="btn" onclick="codHrs('${id}')">⏱ Hours dein</button>
+      <button class="btn ok" onclick="codDone('${id}')">✓ Complete</button></div>`:''}
+    ${adm && (c.status==='accepted'||c.status==='cold') ? `<div class="row" style="margin-top:10px;flex-wrap:wrap">
+      <button class="btn" onclick="codHrs('${id}')">⏱ ${c.status==='cold'?'Naya timer':'Timer change'}</button>
+      <button class="btn ok" onclick="codDone('${id}')">✓ Complete</button>
+      <button class="btn dgr" onclick="codDelA('${id}')">🗑 Delete</button></div>`:''}
+    ${!adm && codExpired(c) ? `<div class="albn" style="margin-top:12px" onclick="codAgree('${id}')">COD DELAY — mujhe pata hai, main touch mein hoon → I AGREE</div>`:''}
+    ${!adm && c.status==='denied' ? `<div class="row" style="margin-top:10px"><button class="btn wide" onclick="codSolveS('${id}')">Reason parh liya — Solve karein</button></div>`:''}
+    ${mine && c.status==='ready' ? `<div class="row" style="margin-top:10px"><button class="btn p wide" onclick="sendCod('${id}')">📤 Send karein</button></div>`:''}
+    ${canChat?`<div class="chdr">
+      <div class="drop-h" onclick="chatT('C${id}')" style="margin:0"><h3>💬 Baat cheet</h3>
+        ${unreadCod(c)?`<span class="ub">${unreadCod(c)}</span>`:''}<span class="ch">${open?'▾ band karein':'▸ kholein'}</span></div>
+      ${open?`<div class="msgs" style="max-height:280px;overflow:auto;margin-top:8px">${msgs||'<div class="hint">Abhi koi message nahi.</div>'}</div>
+      <div class="chatrow"><input class="in" id="ccIn" placeholder="Message…" onkeydown="if(event.key==='Enter')ccSend('${id}')">
+        <button class="btn p" onclick="ccSend('${id}')">Bhejein</button>
+        ${boss?`<button class="btn dgr sm" onclick="clearCchat('${id}')">Clear</button>`:''}</div>
+      ${protCod&&!boss&&!adm?'':''}`:''}
+    </div>`:`<div class="hint" style="margin-top:10px">Is COD par sirf status updates hain.</div>`}
+  </div>`;
+}
+window.ccSend=id=>{ const el=$('#ccIn'); if(!el) return; const t=el.value.trim(); if(!t) return;
+  postCodChat(id,t); el.value='';
+  if(prot((S.cods[id]||{}).by) && S.me.role==='sales') toast('Message BILAL ko gaya — wo forward karenge');
+};
+window.delCmsg=(id,i)=>{ const c=S.cods[id]; if(!c) return;
+  const chat=(c.chat||[]).slice(); chat.splice(i,1); DB.update('cods/'+id,{chat}); };
+window.clearCchat=id=>{ if(!confirm('Chat dono taraf se clear? Pakka?')) return; DB.update('cods/'+id,{chat:[]}); };
+window.fwdSheet=(id,i)=>{
+  const m=((S.cods[id]||{}).chat||[])[i]; if(!m) return;
+  sheet(`<h3>Forward to YOUSUF</h3>
+    <div class="f"><label>Message (edit kar sakte hain)</label><textarea class="in" id="fwT">${esc(m.t)}</textarea></div>
+    <div class="row"><button class="btn p wide" onclick="fwdGo('${id}')">Forward</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.fwdGo=id=>{
+  const t=(($('#fwT')||{}).value||'').trim(); if(!t) return;
+  const c=S.cods[id];
+  DB.update('cods/'+id,{chat:(c.chat||[]).concat([{w:'AHMED ALI', sd:'s', t, at:Date.now(), fwd:true}]), updatedAt:Date.now()});
+  closeSheet(); toast('Forward ho gaya');
+};
+window.codDeny=id=> sheet(`<h3>Not available</h3>
+  <div class="f"><label>Reason <i>*</i> (salesperson ko dikhega)</label><textarea class="in" id="cdR"></textarea></div>
+  <div class="row"><button class="btn dgr wide" onclick="codDenyGo('${id}')">Deny karein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.codDenyGo=id=>{
+  const r=(($('#cdR')||{}).value||'').trim(); if(!r){ toast('Reason zaroori hai','bad'); return; }
+  DB.update('cods/'+id,{status:'denied', denyReason:r, updatedAt:Date.now()});
+  notify(S.cods[id].by,'🚫 COD "'+S.cods[id].name+'" not available — '+r);
+  closeSheet(); toast('Deny — reason chala gaya');
+};
+window.codSolveS=id=>{ DB.update('cods/'+id,{status:'solved2', updatedAt:Date.now()});
+  S.codFull=null; render(); toast('Solve ho gayi'); };
+window.codHrs=id=> sheet(`<h3>Kitne hours mein hogi?</h3>
+  <div class="f"><input class="in mono" id="chH" inputmode="numeric" placeholder="e.g. 24"></div>
+  <div class="row"><button class="btn p wide" onclick="codHrsGo('${id}')">Timer lagayein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.codHrsGo=id=>{
+  const h=Number(($('#chH')||{}).value)||0; if(h<=0){ toast('Hours likhein','bad'); return; }
+  DB.update('cods/'+id,{status:'accepted', hrs:h, acceptedAt:Date.now(), dueAt:Date.now()+h*HOUR, agreed:null, updatedAt:Date.now()});
+  notify(S.cods[id].by,'⏱ COD "'+S.cods[id].name+'" — '+h+'h ka timer laga hai');
+  closeSheet(); toast('Pending — timer shuru');
+};
+window.codAgree=id=>{
+  DB.update('cods/'+id,{status:'cold', agreed:true, agreedAt:Date.now(), updatedAt:Date.now()});
+  notifyAdmins('🧊 '+S.me.name+' — COD "'+S.cods[id].name+'" par I AGREE (cold)');
+  toast('COD cold ho gayi');
+};
+window.codDelA=id=> sheet(`<h3>COD delete</h3>
+  <div class="f"><label>Reason <i>*</i></label><textarea class="in" id="cdlR"></textarea></div>
+  <div class="row"><button class="btn dgr wide" onclick="codDelGo('${id}')">Delete karein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.codDelGo=id=>{
+  const r=(($('#cdlR')||{}).value||'').trim(); if(!r){ toast('Reason zaroori','bad'); return; }
+  notify(S.cods[id].by,'🗑 COD "'+S.cods[id].name+'" delete — '+r);
+  DB.set('cods/'+id,null); S.codFull=null; closeSheet(); render(); toast('Delete ho gayi');
+};
+window.codDone=id=> sheet(`<h3>Complete — slip attach</h3>
+  <div class="f"><input type="file" accept="image/*" id="slF" class="in"></div>
+  <div class="row"><button class="btn ok wide" onclick="codDoneGo('${id}')">Attach + Complete</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.codDoneGo=async id=>{
+  const f=($('#slF')||{}).files&&$('#slF').files[0];
+  if(!f){ toast('Slip attach karein','bad'); return; }
+  const d=await shrink(f);
+  DB.update('cods/'+id,{status:'done', slip:d, doneAt:Date.now(), updatedAt:Date.now()});
+  notify(S.cods[id].by,'✅ COD "'+S.cods[id].name+'" COMPLETE — slip attach hai');
+  closeSheet(); toast('Complete ho gayi');
+};
+window.slipView=id=>{
+  const c=S.cods[id]; if(!c||!c.slip) return;
+  sheet(`<h3>Slip — ${esc(c.name)}</h3><img src="${c.slip}" style="width:100%;border-radius:10px">
+    <div class="row" style="margin-top:10px"><a class="btn wide" href="${c.slip}" download="slip-${esc(c.name)}.jpg">⬇ Download</a>
+      <button class="btn gh" onclick="closeSheet()">Band</button></div>`);
+};
+window.codView=id=>{
+  const J=window.jspdf&&window.jspdf.jsPDF;
+  if(!J){ toast('PDF ke liye internet chahiye','bad'); return; }
+  const orig=J.API.save; let uri=null;
+  J.API.save=function(){ uri=this.output('datauristring'); return this; };
+  try{ pdfCod(id); }finally{ J.API.save=orig; }
+  if(uri) sheet(`<h3>COD PDF</h3>
+    <iframe src="${uri}" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:10px"></iframe>
+    <div class="row" style="margin-top:10px"><button class="btn" onclick="pdfCod('${id}')">⬇ Download</button>
+      <button class="btn gh" onclick="closeSheet()">Band</button></div>`);
+};
+window.codEdit=id=>{
+  const c=S.cods[id];
+  sheet(`<h3>COD edit</h3>
+    <div class="g2"><div class="f"><label>Name</label><input class="in" id="eN" value="${esc(c.name)}"></div>
+      <div class="f"><label>City</label><input class="in" id="eC" value="${esc(c.city)}"></div></div>
+    <div class="g2"><div class="f"><label>Phone 1</label><input class="in mono" id="eP1" value="${esc(c.p1)}"></div>
+      <div class="f"><label>Phone 2</label><input class="in mono" id="eP2" value="${esc(c.p2||'')}"></div></div>
+    <div class="f"><label>Address</label><textarea class="in" id="eA">${esc(c.addr)}</textarea></div>
+    <div class="g2"><div class="f"><label>Model</label><input class="in" id="eM" value="${esc(c.model)}"></div>
+      <div class="f"><label>Total COD</label><input class="in mono" id="eT" inputmode="numeric" value="${c.total}"></div></div>
+    <div class="row"><button class="btn p wide" onclick="codEditGo('${id}')">Save — data change</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.codEditGo=id=>{
+  DB.update('cods/'+id,{name:$('#eN').value, city:$('#eC').value, p1:$('#eP1').value, p2:$('#eP2').value,
+    addr:$('#eA').value, model:$('#eM').value, total:Number($('#eT').value)||S.cods[id].total,
+    amt:Number($('#eT').value)||S.cods[id].amt, updatedAt:Date.now()});
+  closeSheet(); toast('Edit save — PDF ab naye data se banegi');
+};
+window.sendCod=id=>{
+  DB.update('cods/'+id,{status:'sent', sentAt:Date.now(), updatedAt:Date.now()});
+  notifyAdmins('🚚 Naya COD — '+S.cods[id].name+' ('+S.cods[id].byName+')');
+  closeSheet(); S.tab='cod'; S.codFull=null; render(); toast('Bhej di');
+};
+
+/* ==================================================================
+   DEMANDS
+   ================================================================== */
+let reqAtt=[];
+function vReqs(){
+  const adm=isAdm(S.me.role);
+  if(adm && !S.sp)
+    return `<div class="ctop"><div><h2>Demands</h2><div class="csub">Salesperson chunein</div></div></div>`+spBoxes('reqs');
+  const list=(adm? Object.entries(S.reqs).map(([id,r])=>({id,...r})).filter(r=>r.by===S.sp) : myReqs())
+    .filter(r=>!(r.hide||{})[S.me.id]).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const op=list.filter(r=>r.status==='open');
+  const dn=list.filter(r=>r.status==='answered');
+  const head=adm? backBtn("spSel(null)")+`<div class="ctop"><div><h2>${esc((S.staff[S.sp]||{}).name)}</h2><div class="csub">Demands</div></div></div>`
+    :`<div class="ctop"><div><h2>Demands</h2></div>
+      <div class="row" style="margin-left:auto"><button class="btn p" onclick="newReq()">＋ Nayi demand</button></div></div>`;
+  return head
+    + dropGrp('rqo','Remaining demands',op,op.map(reqRow).join(''))
+    + dropGrp('rqd','Done',dn,dn.map(reqRow).join(''))
+    + (list.length?'':empty('Koi demand nahi'));
+}
+function reqRow(r){
+  const done=r.status==='answered';
+  return `<div class="cc" onclick="reqSheet('${r.id}')">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(r.text).slice(0,60)}</div>
+      <div class="sub">${esc(r.byName||'')} · ${stamp(r.createdAt)}</div></div>
+      <div class="end"><span class="chip ${done?'c-grn':'c-amb'}">${done?'DONE':'OPEN'}</span></div></div></div>`;
+}
+window.reqSheet=id=>{
+  const r=S.reqs[id]; const adm=isAdm(S.me.role); reqAtt=[];
+  const atts=(r.ans&&r.ans.att||[]).map((a,i)=>`<span class="attx" onclick="attView('${id}',${i})">${a.ty==='pdf'?'📄':'🖼'} ${esc(a.n)}</span>`).join('');
+  sheet(`<h3>Demand</h3>
+    <div class="hint" style="white-space:pre-wrap;font-size:14px;color:var(--txt)">${esc(r.text)}</div>
+    ${r.ans?`<div class="kv" style="margin-top:10px"><i>Jawab — ${esc(r.ans.by||'')}</i><b style="max-width:65%;text-align:right">${esc(r.ans.t||'')}</b></div><div>${atts}</div>`:''}
+    ${adm && r.status==='open' ? `
+      <div class="f" style="margin-top:12px"><label>Jawab / message</label><textarea class="in" id="raT"></textarea></div>
+      <div class="g2"><div class="f"><label>PDF attach</label><input type="file" accept="application/pdf" id="raP" class="in"></div>
+        <div class="f"><label>Image attach</label><input type="file" accept="image/*" id="raI" class="in"></div></div>
+      <div class="row"><button class="btn ok wide" onclick="reqAns('${id}')">Done — jawab bhejein</button></div>`:''}
+    <div class="row" style="margin-top:10px">
+      <button class="btn gh" onclick="reqHide('${id}')">Sirf mere paas se hatao</button>
+      <button class="btn dgr" onclick="reqDel('${id}')">🗑 Dono taraf se delete</button>
+      <button class="btn gh" onclick="closeSheet()">Band</button></div>`);
+};
+window.attView=(id,i)=>{
+  const a=((S.reqs[id]||{}).ans||{}).att[i]; if(!a) return;
+  if(a.ty==='pdf') sheet(`<h3>${esc(a.n)}</h3><iframe src="${a.d}" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:10px"></iframe>
+    <div class="row" style="margin-top:10px"><a class="btn wide" href="${a.d}" download="${esc(a.n)}">⬇ Download</a><button class="btn gh" onclick="closeSheet()">Band</button></div>`);
+  else sheet(`<h3>${esc(a.n)}</h3><img src="${a.d}" style="width:100%;border-radius:10px">
+    <div class="row" style="margin-top:10px"><a class="btn wide" href="${a.d}" download="${esc(a.n)}">⬇ Download</a><button class="btn gh" onclick="closeSheet()">Band</button></div>`);
+};
+window.reqAns=async id=>{
+  const t=(($('#raT')||{}).value||'').trim();
+  const att=[];
+  const pf=($('#raP')||{}).files&&$('#raP').files[0];
+  const im=($('#raI')||{}).files&&$('#raI').files[0];
+  if(pf){ if(pf.size>2.2e6){ toast('PDF 2MB se choti rakhein','bad'); return; }
+    const d=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(pf); });
+    att.push({n:pf.name, ty:'pdf', d}); }
+  if(im){ att.push({n:im.name, ty:'img', d:await shrink(im)}); }
+  if(!t && !att.length){ toast('Message ya attachment dein','bad'); return; }
+  DB.update('reqs/'+id,{status:'answered', ans:{t, by:S.me.name, at:Date.now(), att}, updatedAt:Date.now()});
+  notify(S.reqs[id].by,'📋 Demand ka jawab aa gaya'+(t?' — '+t.slice(0,40):''));
+  closeSheet(); toast('Done — demand complete');
+};
+window.reqHide=id=>{
+  const r=S.reqs[id]; const hide=Object.assign({},r.hide||{}); hide[S.me.id]=true;
+  DB.update('reqs/'+id,{hide}); closeSheet(); toast('Aap ke paas se hat gayi');
+};
+window.reqDel=id=>{ if(!confirm('Dono taraf se delete. Pakka?')) return;
+  DB.set('reqs/'+id,null); closeSheet(); toast('Delete ho gayi'); };
+window.newReq=()=> sheet(`<h3>Nayi demand</h3>
+  <div class="f"><textarea class="in" id="nqT" placeholder="Kya chahiye…"></textarea></div>
+  <div class="row"><button class="btn p wide" onclick="newReqGo()">Bhejein</button>
+    <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+window.newReqGo=()=>{
+  const t=(($('#nqT')||{}).value||'').trim(); if(!t){ toast('Likhein to sahi','bad'); return; }
+  DB.push('reqs',{text:t, by:S.me.id, byName:S.me.name, status:'open', createdAt:Date.now()});
+  notifyAdmins('📋 Nayi demand — '+S.me.name+': '+t.slice(0,50));
+  closeSheet(); toast('Bhej di');
+};
+
+/* ==================================================================
+   RATES (adjustments editable) · TEAM (backup/restore, no ali gate)
+   ================================================================== */
+function vRatesX(){
+  const adm=isAdm(S.me.role);
+  const adj = adm? `<div class="sec-h"><h3>RAM / Storage adjustments</h3></div>
+  <div class="card"><div class="g2">
+    <div>${[4,8,16,32].map(k=>`<div class="f"><label>RAM ${k}GB (+/− Rs)</label><input class="in mono" id="adR${k}" value="${RAMX()[k]}"></div>`).join('')}</div>
+    <div>${[128,256,512,1024].map(k=>`<div class="f"><label>Storage ${k}GB (+/− Rs)</label><input class="in mono" id="adS${k}" value="${SSDX()[k]}"></div>`).join('')}</div>
+  </div><div class="row"><button class="btn p" onclick="adjSave()">Save adjustments</button></div></div>`:'';
+  return adj + viewRates();
+}
+window.adjSave=()=>{
+  const ramD={}, ssdD={};
+  [4,8,16,32].forEach(k=> ramD[k]=Number(($('#adR'+k)||{}).value)||0);
+  [128,256,512,1024].forEach(k=> ssdD[k]=Number(($('#adS'+k)||{}).value)||0);
+  DB.update('config',{ramD,ssdD}); toast('Adjustments save — rates update ho gaye');
+};
+function vTeamX(){
+  if(S.me.role!=='boss') return empty('Ye section sirf BILAL ke liye hai');
+  return `<div class="ctop"><div><h2>Team & Settings</h2></div></div>
+  <div class="sec-h"><h3>Team</h3><span class="ct">${Object.keys(S.staff).length}</span></div>
+  <div class="card"><table class="tbl"><thead><tr><th>Naam</th><th>Role</th><th>PIN</th><th></th></tr></thead>
+    <tbody>${Object.entries(S.staff).map(([k,s])=>`<tr><td>${esc(s.name)}</td>
+      <td>${isAdm(s.role)?'Admin':'Salesperson'}${s.prot?' · private':''}</td><td class="mono">${esc(s.pin)}</td>
+      <td><button class="btn sm gh" onclick="editStaff('${k}')">Edit</button></td></tr>`).join('')}</tbody></table>
+    <div class="row"><button class="btn p" onclick="editStaff(null)">+ Naya salesperson</button></div></div>
+  <div class="sec-h"><h3>Backup & Restore</h3></div>
+  <div class="card">
+    <div class="hint" style="margin-bottom:10px">Backup = pura data (leads, COD, demands, staff, rates, notes) ek file mein. Restore usi file se sab wapis — maujooda data replace ho jata hai.</div>
+    <div class="row"><button class="btn p" onclick="bkDl()">⬇ Backup download</button>
+      <label class="btn" style="cursor:pointer">⬆ Restore<input type="file" accept="application/json" style="display:none" onchange="bkRs(this)"></label></div>
+  </div>
+  <div class="sec-h"><h3>Phone numbers</h3></div>
+  <div class="card"><div class="g2">
+      <div class="f"><label>YOUSUF ka phone</label><input class="in mono" id="sYp" value="${esc(S.cfg.yousufPhone||'')}"></div>
+      <div class="f"><label>BILAL ka phone</label><input class="in mono" id="sBp" value="${esc(S.cfg.bilalPhone||'')}"></div></div>
+    <div class="row"><button class="btn p" onclick="saveCfg()">Save</button></div></div>`;
+}
+window.bkDl=async ()=>{
+  try{
+    const data=await DB.read(''); const j=JSON.stringify(data||{},null,1);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));
+    a.download='dealdesk-backup-'+today()+'.json'; a.click();
+    toast('Backup download ho gaya');
+  }catch(e){ toast('Backup fail — '+e.message,'bad'); }
+};
+window.bkRs=inp=>{
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const o=JSON.parse(r.result);
+      if(!confirm('Restore se maujooda data REPLACE ho jayega. Pakka?')) return;
+      if(LIVE) fdb.ref(ROOT).set(o).then(()=>toast('Restore ho gaya')).catch(e=>toast('Fail: '+e.message,'bad'));
+      else toast('Internet/Firebase ke bina restore nahi ho sakta','bad');
+    }catch(e){ toast('File theek nahi hai','bad'); } };
+  r.readAsText(f); inp.value='';
+};
+
+/* ==================================================================
+   MY DATA + NOTES (personal — sirf salesperson ka apna)
+   ================================================================== */
+let md={}, mdMore=false;
+function myMd(){ return Object.entries((S.mydata||{})[S.me.id]||{}).map(([id,x])=>({id,...x})).sort((a,b)=>b.at-a.at); }
+function myNotes(){ return Object.entries((S.notes||{})[S.me.id]||{}).map(([id,x])=>({id,...x})).sort((a,b)=>b.at-a.at); }
+function vMyData(){
+  const rows=myMd().filter(F2).map(x=>`<div class="cc" onclick="mdView('${x.id}')">
+    <div class="row1"><div style="min-width:0"><div class="nm">${esc(x.name)}</div>
+      <div class="sub">${esc(x.phone)}${x.model?' · '+esc(x.model):''}</div></div>
+      <div class="end"><span class="chip c-gry">${stamp(x.at).split(' ')[0]||''}</span></div></div></div>`).join('');
+  const notes=myNotes().map(n=>`<div class="ntc ${n.st==='done'?'done':n.st==='urgent'?'urg':''}">
+    <div class="nt">${esc(n.t)}</div>
+    <div class="nm2">${stamp(n.at)}
+      <button class="btn sm ${n.st==='done'?'ok':'gh'}" onclick="noteSt('${n.id}','${n.st==='done'?'':'done'}')">✓ Complete</button>
+      <button class="btn sm ${n.st==='urgent'?'dgr':'gh'}" onclick="noteSt('${n.id}','${n.st==='urgent'?'':'urgent'}')">! Urgent</button>
+      <button class="btn sm gh" onclick="noteEd('${n.id}')">✏</button>
+      <button class="btn sm gh" onclick="noteDel('${n.id}')">🗑</button></div></div>`).join('');
+  return `<div class="ctop"><div><h2>My Data</h2><div class="csub">Sirf aap ka personal record — kisi aur se connected nahi</div></div>${srchBox()}</div>
+  <div class="card">
+    <div class="g2"><div class="f"><label>Name <i>*</i></label><input class="in" id="mN" value="${esc(md.name||'')}"></div>
+      <div class="f"><label>Number <i>*</i></label><input class="in mono" id="mP" inputmode="tel" value="${esc(md.phone||'')}"></div></div>
+    <div class="f"><label>Details <i>*</i></label><textarea class="in" id="mD">${esc(md.detail||'')}</textarea></div>
+    <div class="drop-h" onclick="mdMoreT()" style="margin:4px 0"><h3>Aur details (optional)</h3><span class="ch">${mdMore?'▾':'▸'}</span></div>
+    ${mdMore?`<div class="g2"><div class="f"><label>Model</label><input class="in" id="mM" value="${esc(md.model||'')}"></div>
+      <div class="f"><label>RAM</label><input class="in" id="mR" value="${esc(md.ram||'')}"></div></div>
+    <div class="g2"><div class="f"><label>Storage</label><input class="in" id="mS" value="${esc(md.sto||'')}"></div>
+      <div class="f"><label>Generation / Processor</label><input class="in" id="mG" value="${esc(md.gen||'')}"></div></div>`:''}
+    <div id="mdE" class="err"></div>
+    <div class="row"><button class="btn p wide" onclick="mdSave()">Submit</button></div>
+  </div>
+  <div class="sec-h"><h3>Customers</h3><span class="ct">${myMd().length}</span></div>
+  ${rows||empty('Abhi koi customer save nahi')}
+  <div class="sec-h"><h3>📝 Notes</h3><span class="ct">${myNotes().length}</span></div>
+  <div class="card"><div class="f"><textarea class="in" id="ntT" placeholder="Jo likhna hai…"></textarea></div>
+    <div class="row"><button class="btn p" onclick="noteAdd()">Submit</button></div></div>
+  ${notes}`;
+}
+window.mdMoreT=()=>{ mdKeep(); mdMore=!mdMore; render(); };
+function mdKeep(){ [['mN','name'],['mP','phone'],['mD','detail'],['mM','model'],['mR','ram'],['mS','sto'],['mG','gen']]
+  .forEach(([i,k])=>{ const el=$('#'+i); if(el) md[k]=el.value; }); }
+window.mdSave=()=>{
+  mdKeep();
+  if(!md.name||!md.phone||!md.detail){ $('#mdE').textContent='Name, number aur details zaroori hain.'; return; }
+  const rec={name:md.name, phone:md.phone, detail:md.detail, model:md.model||'', ram:md.ram||'', sto:md.sto||'', gen:md.gen||''};
+  if(md.editId){ DB.update('mydata/'+S.me.id+'/'+md.editId, rec); }
+  else DB.push('mydata/'+S.me.id, Object.assign({at:Date.now()},rec));
+  md={}; mdMore=false; render(); toast('Save ho gaya');
+};
+window.mdView=id=>{
+  const x=((S.mydata||{})[S.me.id]||{})[id]; if(!x) return;
+  sheet(`<h3>${esc(x.name)}</h3>
+    <div class="kv"><i>Number</i><b class="mono">${esc(x.phone)}</b></div>
+    ${x.model?`<div class="kv"><i>Model</i><b>${esc(x.model)}</b></div>`:''}
+    ${x.ram?`<div class="kv"><i>RAM</i><b>${esc(x.ram)}</b></div>`:''}
+    ${x.sto?`<div class="kv"><i>Storage</i><b>${esc(x.sto)}</b></div>`:''}
+    ${x.gen?`<div class="kv"><i>Gen/Proc</i><b>${esc(x.gen)}</b></div>`:''}
+    <div class="hint" style="margin-top:8px;white-space:pre-wrap">${esc(x.detail)}</div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="mdEdit('${id}')">✏ Edit</button>
+      <button class="btn dgr" onclick="mdDel('${id}')">🗑 Delete</button>
+      <button class="btn gh" onclick="closeSheet()">Band</button></div>`);
+};
+window.mdEdit=id=>{
+  const x=((S.mydata||{})[S.me.id]||{})[id]; if(!x) return;
+  md=Object.assign({editId:id},x); mdMore=!!(x.model||x.ram||x.sto||x.gen);
+  closeSheet(); render(); window.scrollTo(0,0); toast('Form mein aa gaya — edit kar ke Submit');
+};
+window.mdDel=id=>{ if(!confirm('Customer delete? Pakka?')) return;
+  DB.set('mydata/'+S.me.id+'/'+id,null); closeSheet(); toast('Delete ho gaya'); };
+window.noteAdd=()=>{
+  const t=(($('#ntT')||{}).value||'').trim(); if(!t){ toast('Kuch likhein','bad'); return; }
+  DB.push('notes/'+S.me.id,{t, st:'', at:Date.now()}); render(); toast('Note save');
+};
+window.noteSt=(id,st)=>{ DB.update('notes/'+S.me.id+'/'+id,{st}); };
+window.noteDel=id=>{ if(!confirm('Note delete?')) return; DB.set('notes/'+S.me.id+'/'+id,null); };
+window.noteEd=id=>{
+  const n=((S.notes||{})[S.me.id]||{})[id]; if(!n) return;
+  sheet(`<h3>Note edit</h3><div class="f"><textarea class="in" id="neT">${esc(n.t)}</textarea></div>
+    <div class="row"><button class="btn p wide" onclick="noteEdGo('${id}')">Save</button>
+      <button class="btn gh" onclick="closeSheet()">Cancel</button></div>`);
+};
+window.noteEdGo=id=>{
+  const t=(($('#neT')||{}).value||'').trim(); if(!t) return;
+  DB.update('notes/'+S.me.id+'/'+id,{t}); closeSheet(); toast('Save');
+};
+
+/* ==================================================================
+   NOTIFICATIONS
+   ================================================================== */
+function vNotifs(){
+  const list=myNotifs();
+  setTimeout(()=>{ list.filter(n=>!n.read).forEach(n=> DB.update('notifs/'+S.me.id+'/'+n.id,{read:true})); },600);
+  return `<div class="ctop"><div><h2>Notifications</h2></div>
+    ${list.length?`<div class="row" style="margin-left:auto"><button class="btn gh sm" onclick="ntClr()">Sab clear</button></div>`:''}</div>`
+    + (list.map(n=>`<div class="cc" style="cursor:default"><div class="row1">
+        <div style="min-width:0"><div class="nm" style="font-weight:600;font-size:13.5px">${esc(n.t)}</div>
+        <div class="sub">${stamp(n.at)}</div></div>
+        ${!n.read?'<span class="chip c-red">NEW</span>':''}</div></div>`).join('')
+      || empty('Koi notification nahi'));
+}
+window.ntClr=()=>{ DB.set('notifs/'+S.me.id,null); render(); };
+
+/* GO */
+boot();
+render();
+</script>
+</body>
+</html>
